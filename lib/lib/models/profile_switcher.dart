@@ -9,38 +9,29 @@ class _ProfileSwitcherScreenState extends State<ProfileSwitcherScreen> {
   String activeProfile = 'Personal';
   final List<String> profiles = ['Personal', 'Business', 'Creator', 'Private'];
 
+  void _switchProfile(String newProfile) {
+    setState(() {
+      activeProfile = newProfile;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Switched to $newProfile Profile')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Star India - Active: $activeProfile'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Current Profile: $activeProfile', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
-            DropdownButton<String>(
-              value: activeProfile,
-              items: profiles.map((String profile) {
-                return DropdownMenuItem<String>(
-                  value: profile,
-                  child: Text(profile),
-                );
-              }).toList(),
-              onChanged: (String? newProfile) {
-                if (newProfile != null) {
-                  setState(() {
-                    activeProfile = newProfile;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
+      appBar: AppBar(title: Text('Select Profile')),
+      body: ListView.builder(
+        itemCount: profiles.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(profiles[index]),
+            trailing: activeProfile == profiles[index] ? Icon(Icons.check, color: Colors.indigo) : null,
+            onTap: () => _switchProfile(profiles[index]),
+          );
+        },
       ),
     );
   }
 }
-
