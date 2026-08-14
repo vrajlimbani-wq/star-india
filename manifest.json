@@ -1,0 +1,16 @@
+{
+  "name": "Star India",
+  "short_name": "StarIndia",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#ff9800",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
