@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
 
-class FeedScreen extends StatelessWidget {
+class FeedScreen extends StatefulWidget {
+  @override
+  _FeedScreenState createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  final List<String> posts = ['Welcome to Star India App!', 'Building residential projects in Ahmedabad.', 'Exploring new features today.'];
+
+  void _addNewPost() {
+    setState(() {
+      posts.insert(0, 'New Post: My fresh update!');
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('New post added successfully!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Star India - Feed & Shorts'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add_box),
+            onPressed: _addNewPost,
+          ),
+        ],
       ),
       body: ListView.builder(
-        itemCount: 5,
+        itemCount: posts.length,
         itemBuilder: (context, index) {
           return Card(
             margin: EdgeInsets.all(10),
@@ -18,18 +40,22 @@ class FeedScreen extends StatelessWidget {
                 ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.indigo,
-                    child: Text('U${index + 1}'),
+                    child: Text('U1'),
                   ),
-                  title: Text('User Profile ${index + 1}'),
-                  subtitle: Text('Posted just now'),
+                  title: Text('Vraj Limbani'),
+                  subtitle: Text('Just now'),
                 ),
                 Container(
-                  height: 200,
-                  color: Colors.grey[300],
+                  height: 180,
+                  color: Colors.grey[200],
                   child: Center(
-                    child: Text(
-                      'Smart Feed Media / Short Video ${index + 1}',
-                      style: TextStyle(color: Colors.black54, fontSize: 16),
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        posts[index],
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
@@ -64,4 +90,3 @@ class FeedScreen extends StatelessWidget {
     );
   }
 }
-
