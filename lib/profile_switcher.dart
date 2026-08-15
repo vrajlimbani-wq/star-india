@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class ProfileSwitcherScreen extends StatelessWidget {
-  const ProfileSwitcherScreen({super.key});
+  final String? activeProfile;
+
+  const ProfileSwitcherScreen({
+    super.key,
+    this.activeProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +17,14 @@ class ProfileSwitcherScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          if (activeProfile != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(
+                'Current Profile: $activeProfile',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
           _buildProfileTile(context, 'Personal Profile', Icons.person),
           _buildProfileTile(context, 'Business Profile', Icons.business),
           _buildProfileTile(context, 'Creator Profile', Icons.video_collection),
@@ -28,10 +41,9 @@ class ProfileSwitcherScreen extends StatelessWidget {
         title: Text(title),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          Navigator.pop(context);
+          Navigator.pop(context, title);
         },
       ),
     );
   }
 }
-
