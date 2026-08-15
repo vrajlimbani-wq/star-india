@@ -106,88 +106,172 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
-        elevation: 1,
-        title: const Text(
-          'Star India',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
+  Widget _buildPostAction(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade600),
+        if (label.isNotEmpty) ...[
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildReelAction(IconData icon, String count, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 4),
+        Text(count, style: const TextStyle(color: Colors.white, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildMyStoryItem() {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      child: const Column(
+        children: [
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.grey,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: CircleAvatar(
+                  radius: 9,
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.add, size: 14, color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined, color: Colors.white),
-            tooltip: 'Create Post',
-            onPressed: _openCreatePostModal,
-          ),
-          IconButton(
-            icon: const Icon(Icons.send_rounded, color: Colors.white),
-            tooltip: 'Direct Messages',
-            onPressed: () {
-              setState(() => _currentIndex = 3);
-            },
-          ),
+          SizedBox(height: 4),
+          Text('Your Story', style: TextStyle(fontSize: 11)),
         ],
       ),
-      body: _getBody(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: Color(0xFF1E3A8A)),
-            label: 'Feed',
+    );
+  }
+
+  Widget _buildStoryItem(String title, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.pink, width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 26,
+              backgroundColor: color,
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.play_circle_outline),
-            selectedIcon: Icon(Icons.play_circle_fill, color: Colors.red),
-            label: 'Reels',
+          const SizedBox(height: 4),
+          Text(title, style: const TextStyle(fontSize: 11)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTwitterPost(String name, String handle, String text, String likes, String comments) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.black87,
+                  child: Icon(Icons.tag, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 8),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 6),
+                Text(handle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(text, style: const TextStyle(fontSize: 14, height: 1.3)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildPostAction(Icons.chat_bubble_outline, comments),
+                _buildPostAction(Icons.repeat, 'Repost'),
+                _buildPostAction(Icons.favorite_border, likes),
+                _buildPostAction(Icons.share_outlined, ''),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaPost(String name, String location, String text, String likes, String comments) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Color(0xFF1E3A8A),
+              child: Icon(Icons.person, color: Colors.white),
+            ),
+            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(location, style: const TextStyle(fontSize: 11)),
+            trailing: const Icon(Icons.more_vert),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.trending_up),
-            selectedIcon: Icon(Icons.trending_up, color: Color(0xFF1E3A8A)),
-            label: 'Explore',
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            child: Text(text),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat, color: Colors.green),
-            label: 'Chats',
+          Container(
+            height: 180,
+            margin: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade900,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: Icon(Icons.image, size: 60, color: Colors.white54),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: Color(0xFF1E3A8A)),
-            label: 'Profile',
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              children: [
+                IconButton(icon: const Icon(Icons.favorite_border, color: Colors.red), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.chat_bubble_outline), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.send_outlined), onPressed: () {}),
+                const Spacer(),
+                IconButton(icon: const Icon(Icons.bookmark_border), onPressed: () {}),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _getBody() {
-    switch (_currentIndex) {
-      case 0:
-        return _buildCombinedFeed();
-      case 1:
-        return _buildReelsShortsFeed();
-      case 2:
-        return _buildTrendingExplore();
-      case 3:
-        return _buildWhatsAppChats();
-      case 4:
-        return _buildInstagramProfile();
-      default:
-        return _buildCombinedFeed();
-    }
-  }
-
-  // 1. Combined Feed (FB, X, Insta Stories)
   Widget _buildCombinedFeed() {
     return ListView(
       children: [
@@ -261,7 +345,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 2. Reels (TikTok / Insta Reels)
   Widget _buildReelsShortsFeed() {
     return PageView.builder(
       scrollDirection: Axis.vertical,
@@ -324,7 +407,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 3. Explore & Trending (Twitter/X)
   Widget _buildTrendingExplore() {
     List<Map<String, String>> trends = [
       {'tag': '#StarIndiaApp', 'posts': '52.4K Posts', 'category': 'Trending in Gujarat'},
@@ -361,7 +443,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 4. WhatsApp Style Messenger
   Widget _buildWhatsAppChats() {
     List<Map<String, String>> chats = [
       {'name': 'Star India Support', 'msg': 'નમસ્તે, આપનું એકાઉન્ટ સક્રિય થઈ ગયું છે.', 'time': '10:45 AM', 'unread': '1'},
@@ -405,7 +486,15 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 5. Instagram Style Profile
+  Widget _buildStatColumn(String count, String label) {
+    return Column(
+      children: [
+        Text(count, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+
   Widget _buildInstagramProfile() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -469,110 +558,25 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // Helper Methods
-  Widget _buildStatColumn(String count, String label) {
-    return Column(
-      children: [
-        Text(count, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
+  Widget _getBody() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildCombinedFeed();
+      case 1:
+        return _buildReelsShortsFeed();
+      case 2:
+        return _buildTrendingExplore();
+      case 3:
+        return _buildWhatsAppChats();
+      case 4:
+        return _buildInstagramProfile();
+      default:
+        return _buildCombinedFeed();
+    }
   }
 
-  Widget _buildMyStoryItem() {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: const Column(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(radius: 28, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white)),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(radius: 9, backgroundColor: Colors.blue, child: Icon(Icons.add, size: 14, color: Colors.white)),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Text('Your Story', style: TextStyle(fontSize: 11)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStoryItem(String title, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2.5),
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.pink, width: 2)),
-            child: CircleAvatar(radius: 26, backgroundColor: color, child: Icon(icon, color: Colors.white, size: 22)),
-          ),
-          const SizedBox(height: 4),
-          Text(title, style: const TextStyle(fontSize: 11)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostAction(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        if (label.isNotEmpty) ...[
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTwitterPost(String name, String handle, String text, String likes, String comments) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const CircleAvatar(radius: 18, backgroundColor: Colors.black87, child: Icon(Icons.tag, color: Colors.white, size: 18)),
-                const SizedBox(width: 8),
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 6),
-                Text(handle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(text, style: const TextStyle(fontSize: 14, height: 1.3)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildPostAction(Icons.chat_bubble_outline, comments),
-                _buildPostAction(Icons.repeat, 'Repost'),
-                _buildPostAction(Icons.favorite_border, likes),
-                _buildPostAction(Icons.share_outlined, ''),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMediaPost(String name, String location, String text, String likes, String comments) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTil
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: co
