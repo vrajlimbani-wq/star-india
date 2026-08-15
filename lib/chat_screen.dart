@@ -1,60 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ChatScreen extends StatefulWidget {
-  final String activeProfile;
-  const ChatScreen({super.key, required this.activeProfile});
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  void _sendMessage() async {
-    if (_controller.text.isNotEmpty) {
-      await _firestore.collection('chats').add({
-        'message': _controller.text,
-        'profileType': widget.activeProfile,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      _controller.clear();
-    }
-  }
+class ChatsScreen extends StatelessWidget {
+  const ChatsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Chat (${widget.activeProfile})')),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('chats').where('profileType', isEqualTo: widget.activeProfile).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final chats = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: chats.length,
-                  itemBuilder: (context, i) {
-                    var m = chats[i].data() as Map<String, dynamic>;
-                    return ListTile(title: Text(m['message']));
-                  },
-                );
-              },
-            ),
+    final List<Map<String, String>> chats = [
+      {'name': 'Star India Support', 'msg': 'નમસ્તે, આપનું સ્વાગત છે.', 'time': '10:45 AM', 'unread': '1'},
+      {'name': 'ગુજરાત ક્રિએટર્સ ગ્રૂપ', 'msg': 'નવી પોસ્ટ શેર કરવામાં આવી છે.', 'time': '09:12 AM', 'unread': '3'},
+      {'name': 'Social Updates', 'msg': 'તમારી Reel ટ્રેન્ડિંગમાં છે.', 'time': 'Yesterday', 'unread': '0'},
+    ];
+
+    return ListView.separated(
+      itemCount: chats.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final c = chats[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: const Color(0xFF1E3A8A),
+            child: Text(c['name']![0], style: const TextStyle(color: Colors.white)),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(children: [
-              Expanded(child: TextField(controller: _controller)),
-              IconButton(icon: const Icon(Icons.send), onPressed: _sendMessage)
-            ]),
-          )
-        ],
-      ),
+          title: Text(c['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(c['msg']!, maxLines: 1, overflow: TextOverflow.ellipsis),
+          trailing: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(c['time']!, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              if (c['unread'] != '0')
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.all(5),
+                  decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                  child: Text(c['unread']!, style: const TextStyle(color: Colors.white, fontSize: 10)),
+                ),
+            ],
+          ),
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${c['name']} સાથે ચેટ શરૂ કરો')),
+            );
+          },
+        );
+      },
     );
   }
 }
