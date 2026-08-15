@@ -68,49 +68,51 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'પ્રોફાઇલ પસંદ કરો (Switch Profile)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.blue,
-                  child: Icon(Icons.person, color: Colors.white),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'પ્રોફાઇલ પસંદ કરો (Switch Profile)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                title: const Text('Personal Profile'),
-                subtitle: const Text('વ્યક્તિગત સેવાઓ અને ફીડ'),
-                trailing: _activeProfile == 'Personal'
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                onTap: () {
-                  setState(() => _activeProfile = 'Personal');
-                  Navigator.pop(context);
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.orange,
-                  child: Icon(Icons.business, color: Colors.white),
+                const SizedBox(height: 15),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  title: const Text('Personal Profile'),
+                  subtitle: const Text('વ્યક્તિગત સેવાઓ અને ફીડ'),
+                  trailing: _activeProfile == 'Personal'
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    setState(() => _activeProfile = 'Personal');
+                    Navigator.pop(context);
+                  },
                 ),
-                title: const Text('Business Profile'),
-                subtitle: const Text('બિઝનેસ ડેશબોર્ડ, પ્રોડક્ટ્સ અને સર્વિસિસ'),
-                trailing: _activeProfile == 'Business'
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                onTap: () {
-                  setState(() => _activeProfile = 'Business');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+                const Divider(),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.orange,
+                    child: Icon(Icons.business, color: Colors.white),
+                  ),
+                  title: const Text('Business Profile'),
+                  subtitle: const Text('બિઝનેસ ડેશબોર્ડ, પ્રોડક્ટ્સ અને સર્વિસિસ'),
+                  trailing: _activeProfile == 'Business'
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    setState(() => _activeProfile = 'Business');
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -211,7 +213,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
-  // --- 1. Personal Feed / Service Listing ---
+  // 1. Personal Feed
   Widget _buildPersonalFeed() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -279,7 +281,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // --- 2. Business Dashboard & Product Listing ---
+  // 2. Business Dashboard
   Widget _buildBusinessDashboard() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -343,27 +345,29 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // --- 3. Search Screen ---
+  // 3. Search Screen
   Widget _buildSearchScreen() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      children: [
-        TextField(
-          decoration: InputDecoration(
-            hintText: 'સર્વિસ, પ્રોડક્ટ અથવા બિઝનેસ શોધો...',
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.grey.shade100,
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'સર્વિસ, પ્રોડક્ટ અથવા બિઝનેસ શોધો...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
-        const Center(child: Text('શોધવા માટે કીવર્ડ દાખલ કરો')),
-      ],
+          const SizedBox(height: 20),
+          const Center(child: Text('શોધવા માટે કીવર્ડ દાખલ કરો')),
+        ],
+      ),
     );
   }
 
-  // --- 4. Notification Screen ---
+  // 4. Notification Screen
   Widget _buildNotificationScreen() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -378,7 +382,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // --- 5. Profile Screen ---
+  // 5. Profile Screen
   Widget _buildProfileScreen() {
     return ListView(
       padding: const EdgeInsets.all(16),
