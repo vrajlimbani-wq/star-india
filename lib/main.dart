@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'language_selection_screen.dart';
 import 'profile_switcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint('Firebase error: $e');
-  }
+  
+  // ફાઈલ પાથ પર આધાર રાખ્યા વગર સીધું ડાયરેક્ટ કનેક્શન
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyAFWVCmLEW-3vmjQys5p4yj3JkjJJho2Cc",
+      appId: "1:219020282945:android:82be9457eb99719125cac0",
+      messagingSenderId: "219020282945",
+      projectId: "star-india-a377f",
+      storageBucket: "star-india-a377f.firebasestorage.app",
+    ),
+  );
+  
   runApp(const StarIndiaApp());
 }
 
@@ -47,7 +54,6 @@ class MainHomeScreen extends StatefulWidget {
 }
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
-  int _currentIndex = 0;
   late String _activeProfile;
 
   @override
@@ -104,60 +110,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              try {
-                await FirebaseAuth.instance.signOut();
-              } catch (_) {}
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LanguageSelectionScreen()),
-                );
-              }
-            },
-          )
-        ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.account_circle, size: 80, color: Colors.indigo),
-            const SizedBox(height: 16),
-            Text(
-              'Welcome, ${widget.userName}!',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Active Profile: $_activeProfile',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-            ),
-          ],
+        child: Text(
+          'વેલકમ, ${widget.userName}!',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: Colors.indigo),
-            label: 'Feed & Shorts',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble, color: Colors.indigo),
-            label: 'Chat',
-          ),
-        ],
       ),
     );
   }
