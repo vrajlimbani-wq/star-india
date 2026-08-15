@@ -25,22 +25,9 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
 
-      - name: Recreate Android Project with Firebase
+      - name: Fix Android v2 Embedding and Dependencies
         run: |
-          # Backup google-services.json જો અગાઉ હોય તો
-          if [ -f "android/app/google-services.json" ]; then
-            cp android/app/google-services.json /tmp/google-services.json
-          fi
-          
-          # જૂનું એન્ડ્રોઇડ કાઢીને નવું v2 એમ્બેડિંગ બનાવવું
-          rm -rf android
-          flutter create --project-name=star_india --org=com.example --platforms=android .
-          
-          # ગૂગલ સર્વિસિસ ફાઇલ પાછી મુકવી
-          if [ -f "/tmp/google-services.json" ]; then
-            cp /tmp/google-services.json android/app/google-services.json
-          fi
-          
+          flutter create . --platforms=android
           flutter pub get
 
       - name: Build APK
