@@ -55,7 +55,6 @@ class MainHomeScreen extends StatefulWidget {
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
-  String _searchQuery = "";
 
   void _openCreatePostModal() {
     showModalBottomSheet(
@@ -188,11 +187,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
-  // 1. Combined Social Feed (Facebook + X + Stories)
+  // 1. Combined Feed (FB, X, Insta Stories)
   Widget _buildCombinedFeed() {
     return ListView(
       children: [
-        // WhatsApp / Instagram Style Stories Bar
         Container(
           height: 105,
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -212,8 +210,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ],
           ),
         ),
-
-        // Facebook Style Create Post Box
         Card(
           margin: const EdgeInsets.all(8),
           elevation: 1,
@@ -247,17 +243,13 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
           ),
         ),
-
-        // Twitter / X Format Post
         _buildTwitterPost(
           'Star India Official',
           '@starindia',
-          'નવું ઓલ-ઇન-વન સોશિયલ મીડિયા હબ હવે તૈયાર છે! તમામ ફીચર્સ એક જ જગ્યાએ ઉપલબ્ધ. 🚀 #StarIndia #NextGenApp',
+          'નવું ઓલ-ઇન-વન સોશિયલ મીડિયા હબ હવે તૈયાર છે! તમામ સોશિયલ મીડિયા ફીચર્સ એક જ જગ્યાએ. 🚀 #StarIndia #NextGenApp',
           '1.5K',
           '240',
         ),
-
-        // Instagram / Facebook Format Media Post
         _buildMediaPost(
           widget.userName,
           'અમદાવાદ, ગુજરાત',
@@ -269,7 +261,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 2. Reels & Shorts (TikTok / Insta Reels Style)
+  // 2. Reels (TikTok / Insta Reels)
   Widget _buildReelsShortsFeed() {
     return PageView.builder(
       scrollDirection: Axis.vertical,
@@ -332,7 +324,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 3. Explore & Trending (Twitter/X Hub)
+  // 3. Explore & Trending (Twitter/X)
   Widget _buildTrendingExplore() {
     List<Map<String, String>> trends = [
       {'tag': '#StarIndiaApp', 'posts': '52.4K Posts', 'category': 'Trending in Gujarat'},
@@ -345,7 +337,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         TextField(
-          onChanged: (val) => setState(() => _searchQuery = val),
           decoration: InputDecoration(
             hintText: 'સર્ચ કરો ટ્રેન્ડ્સ, પ્રોફાઇલ કે હેશટેગ...',
             prefixIcon: const Icon(Icons.search),
@@ -478,7 +469,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // Helpers
+  // Helper Methods
   Widget _buildStatColumn(String count, String label) {
     return Column(
       children: [
@@ -527,6 +518,18 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
+  Widget _buildPostAction(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade600),
+        if (label.isNotEmpty) ...[
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        ],
+      ],
+    );
+  }
+
   Widget _buildTwitterPost(String name, String handle, String text, String likes, String comments) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -572,5 +575,4 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: const CircleAvatar(backgr
+          ListTil
