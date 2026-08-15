@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class ProfileSwitcherScreen extends StatelessWidget {
   final String? activeProfile;
+  final Function(String)? onProfileChanged;
 
   const ProfileSwitcherScreen({
     super.key,
     this.activeProfile,
+    this.onProfileChanged,
   });
 
   @override
@@ -41,6 +43,9 @@ class ProfileSwitcherScreen extends StatelessWidget {
         title: Text(title),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
+          if (onProfileChanged != null) {
+            onProfileChanged!(title);
+          }
           Navigator.pop(context, title);
         },
       ),
