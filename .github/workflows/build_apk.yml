@@ -25,9 +25,10 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
 
-      - name: Recreate Android Project
+      - name: Recreate Clean Android Structure
         run: |
-          flutter create --project-name=star_india --platforms=android .
+          rm -rf android
+          flutter create --project-name=star_india --org=com.example --platforms=android .
           flutter pub get
 
       - name: Build APK
