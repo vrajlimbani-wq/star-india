@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'feed_screen.dart';
 import 'chat_screen.dart';
 import 'profile_switcher.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const StarIndiaApp());
 }
 
@@ -16,7 +19,10 @@ class StarIndiaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Star India',
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          primary: Colors.indigo,
+        ),
         useMaterial3: true,
       ),
       home: const MainHomeScreen(),
@@ -51,6 +57,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.indigo,
+        elevation: 2,
         title: GestureDetector(
           onTap: () {
             Navigator.push(
@@ -63,27 +70,50 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               ),
             );
           },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Star India [$_activeProfile]', style: TextStyle(color: Colors.white, fontSize: 18)),
-              Icon(Icons.arrow_drop_down, color: Colors.white),
-            ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.stars, color: Colors.amber, size: 20),
+                const SizedBox(width: 6),
+                Text(
+                  'Star India [$_activeProfile]',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.white),
+              ],
+            ),
           ),
         ),
       ),
       body: screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.indigo,
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Feed'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home, color: Colors.indigo),
+            label: 'Feed & Shorts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble, color: Colors.indigo),
+            label: 'Chat',
+          ),
         ],
       ),
     );
