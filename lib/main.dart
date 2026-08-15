@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +56,7 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
   late String _activeProfile;
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -76,7 +79,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'પ્રોફાઇલ પસંદ કરો (Switch Profile)',
+                  'પ્રોફાઇલ મોડ પસંદ કરો',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 15),
@@ -86,7 +89,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     child: Icon(Icons.person, color: Colors.white),
                   ),
                   title: const Text('Personal Profile'),
-                  subtitle: const Text('વ્યક્તિગત સેવાઓ અને ફીડ'),
+                  subtitle: const Text('ગ્રાહક સેવાઓ અને સામાન્ય ફીડ'),
                   trailing: _activeProfile == 'Personal'
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
@@ -102,7 +105,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                     child: Icon(Icons.business, color: Colors.white),
                   ),
                   title: const Text('Business Profile'),
-                  subtitle: const Text('બિઝનેસ ડેશબોર્ડ, પ્રોડક્ટ્સ અને સર્વિસિસ'),
+                  subtitle: const Text('વેપાર, ક્વોટેશન અને પ્રોડક્ટ લિસ્ટિંગ'),
                   trailing: _activeProfile == 'Business'
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
@@ -116,6 +119,15 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _openCategoryPage(String title, IconData icon) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CategoryDetailScreen(categoryName: title, categoryIcon: icon),
+      ),
     );
   }
 
@@ -158,7 +170,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('QR સ્કેનર જલ્દી ઉપલબ્ધ થશે')),
+              );
+            },
           ),
         ],
       ),
@@ -213,7 +229,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
-  // 1. Personal Feed
+  // --- 1. Personal Feed ---
   Widget _buildPersonalFeed() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -247,7 +263,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'સેવાઓ અને કેટેગરીઝ',
+          'સેવાઓ અને કેટેગરીઝ (ટેપ કરીને જુઓ)',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
@@ -263,7 +279,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             _buildCategoryItem(Icons.local_shipping, 'ટ્રાન્સપોર્ટ'),
             _buildCategoryItem(Icons.handyman, 'લેબર વર્ક'),
             _buildCategoryItem(Icons.store, 'વેપાર/મટિરિયલ'),
-            _buildCategoryItem(Icons.more_horiz, 'અન્ય'),
+            _buildCategoryItem(Icons.more_horiz, 'અન્ય સેવાઓ'),
           ],
         ),
         const SizedBox(height: 20),
@@ -274,14 +290,14 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         const SizedBox(height: 10),
         _buildFeedCard(
           'સ્ટાર ઇન્ડિયા કન્સ્ટ્રક્શન અપડેટ',
-          'અમદાવાદ વિસ્તારમાં નવા પ્રોજેક્ટ માટે ઉપલબ્ધ પ્લાનિંગ અને કોન્ટ્રાક્ટ વર્ક.',
+          'અમદાવાદ અને આસપાસના વિસ્તારમાં નવા પ્રોજેક્ટ માટે ઉપલબ્ધ પ્લાનિંગ અને કોન્ટ્રાક્ટ વર્ક.',
           Icons.apartment,
         ),
       ],
     );
   }
 
-  // 2. Business Dashboard
+  // --- 2. Business Dashboard ---
   Widget _buildBusinessDashboard() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -328,7 +344,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                _showAddProductDialog();
+              },
               icon: const Icon(Icons.add, size: 16),
               label: const Text('નવું ઉમેરો'),
               style: ElevatedButton.styleFrom(
@@ -345,44 +363,71 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  // 3. Search Screen
+  // --- 3. Search Screen ---
   Widget _buildSearchScreen() {
+    List<String> items = [
+      'કન્સ્ટ્રક્શન સેવાઓ',
+      'ઇન્ટિરિયર ડિઝાઇનિંગ',
+      'ટ્રાન્સપોર્ટ & લોજિસ્ટિક્સ',
+      'કુશળ કારીગરો & લેબર',
+      'બિલ્ડિંગ મટિરિયલ સપ્લાય',
+      'પ્લાનિંગ & આર્કિટેક્ચરલ વર્ક'
+    ];
+
+    List<String> filtered = items
+        .where((e) => e.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'સર્વિસ, પ્રોડક્ટ અથવા બિઝનેસ શોધો...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.grey.shade100,
-            ),
+      children: [
+        TextField(
+          onChanged: (val) => setState(() => _searchQuery = val),
+          decoration: InputDecoration(
+            hintText: 'સર્વિસ કે મટિરિયલ શોધો...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: Colors.grey.shade100,
           ),
-          const SizedBox(height: 20),
-          const Center(child: Text('શોધવા માટે કીવર્ડ દાખલ કરો')),
-        ],
-      ),
+        ),
+        const SizedBox(height: 15),
+        Expanded(
+          child: ListView.builder(
+            itemCount: filtered.length,
+            itemBuilder: (context, idx) {
+              return ListTile(
+                leading: const Icon(Icons.arrow_forward_ios, size: 16),
+                title: Text(filtered[idx]),
+                onTap: () {
+                  _openCategoryPage(filtered[idx], Icons.check_circle_outline);
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  // 4. Notification Screen
+  // --- 4. Notification Screen ---
   Widget _buildNotificationScreen() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: const [
         ListTile(
-          leading: CircleAvatar(child: Icon(Icons.notifications_active)),
+          leading: CircleAvatar(
+            backgroundColor: Colors.indigo,
+            child: Icon(Icons.notifications, color: Colors.white),
+          ),
           title: Text('સ્ટાર ઇન્ડિયામાં તમારું સ્વાગત છે!'),
-          subtitle: Text('તમારી પ્રોફાઇલ સફળતાપૂર્વક તૈયાર થઈ ગઈ છે.'),
+          subtitle: Text('તમારી પ્રોફાઇલ અને ડેટાબેઝ સેટઅપ સફળ થઈ ગયું છે.'),
         ),
-        Divider(),
       ],
     );
   }
 
-  // 5. Profile Screen
+  // --- 5. Profile Screen ---
   Widget _buildProfileScreen() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -400,45 +445,61 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 widget.userName,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              Text('મોડ: $_activeProfile', style: const TextStyle(color: Colors.grey)),
+              Text('ચાલુ પ્રોફાઇલ: $_activeProfile', style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 25),
         ListTile(
-          leading: const Icon(Icons.edit),
-          title: const Text('પ્રોફાઇલ એડિટ કરો'),
-          onTap: () {},
-        ),
-        ListTile(
-          leading: const Icon(Icons.swap_horiz),
-          title: const Text('પ્રોફાઇલ સ્વિચ કરો'),
+          leading: const Icon(Icons.swap_horiz, color: Colors.blue),
+          title: const Text('પ્રોફાઇલ મોડ બદલો'),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: _showProfileSwitchModal,
         ),
+        const Divider(),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.red),
-          title: const Text('લોગઆઉટ', style: TextStyle(color: Colors.red)),
-          onTap: () {},
+          title: const Text('લોગઆઉટ કરો', style: TextStyle(color: Colors.red)),
+          onTap: () async {
+            await FirebaseAuth.instance.signOut();
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
+              );
+            }
+          },
         ),
       ],
     );
   }
 
-  // Helper Widgets
   Widget _buildCategoryItem(IconData icon, String label) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      elevation: 1,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: const Color(0xFF1E3A8A), size: 28),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ],
+        onTap: () => _openCategoryPage(label, icon),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: const Color(0xFF1E3A8A), size: 30),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -446,23 +507,26 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   Widget _buildFeedCard(String title, String desc, IconData icon) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: const Color(0xFF1E3A8A)),
-                const SizedBox(width: 8),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(desc, style: const TextStyle(color: Colors.black87)),
-          ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openCategoryPage(title, icon),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: const Color(0xFF1E3A8A)),
+                  const SizedBox(width: 8),
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(desc, style: const TextStyle(color: Colors.black87)),
+            ],
+          ),
         ),
       ),
     );
@@ -504,4 +568,54 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       ),
     );
   }
+
+  void _showAddProductDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('નવી સર્વિસ ઉમેરો'),
+          content: const Text('તમારી નવી સર્વિસ અથવા પ્રોડક્ટની વિગતો અહીંથી એન્ટર કરી શકાશે.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ઓકે'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+// --- Category Detail Page ---
+class CategoryDetailScreen extends StatelessWidget {
+  final String categoryName;
+  final IconData categoryIcon;
+
+  const CategoryDetailScreen({
+    super.key,
+    required this.categoryName,
+    required this.categoryIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(categoryName),
+        backgroundColor: const Color(0xFF1E3A8A),
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Center(
+              child: CircleAvatar(
+                radius: 45,
+                backgroundColor: Colors.blue.shade100,
+                child: Icon(categoryIcon, size: 50, color: const Color(0xFF1E3A8A)),
+              ),
+            ),
+      
