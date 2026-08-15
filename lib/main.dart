@@ -34,20 +34,78 @@ class StarIndiaApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const MainSocialHubScreen(),
+      home: const MainHomeScreen(),
     );
   }
 }
 
-class MainSocialHubScreen extends StatefulWidget {
-  const MainSocialHubScreen({super.key});
+class MainHomeScreen extends StatefulWidget {
+  final String userName;
+  final String profileType;
+
+  const MainHomeScreen({
+    super.key,
+    this.userName = "Vraj Limbani",
+    this.profileType = "Personal",
+  });
 
   @override
-  State<MainSocialHubScreen> createState() => _MainSocialHubScreenState();
+  State<MainHomeScreen> createState() => _MainHomeScreenState();
 }
 
-class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
+class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
+  String _searchQuery = "";
+
+  void _openCreatePostModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'નવી પોસ્ટ / કન્ટેન્ટ ઉમેરો',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Icon(Icons.post_add, color: Colors.white),
+                  ),
+                  title: const Text('Create Post / Tweet (X & FB)'),
+                  onTap: () => Navigator.pop(context),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.video_call, color: Colors.white),
+                  ),
+                  title: const Text('Upload Reel / Video (TikTok & Insta)'),
+                  onTap: () => Navigator.pop(context),
+                ),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.green,
+                    child: Icon(Icons.history_toggle_off, color: Colors.white),
+                  ),
+                  title: const Text('Add Status / Story (WhatsApp)'),
+                  onTap: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,12 +124,12 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_box_outlined, color: Colors.white),
-            tooltip: 'Create Post / Reel',
-            onPressed: () => _openCreatePostModal(),
+            tooltip: 'Create Post',
+            onPressed: _openCreatePostModal,
           ),
           IconButton(
-            icon: const Icon(Icons.message_outlined, color: Colors.white),
-            tooltip: 'WhatsApp Chat',
+            icon: const Icon(Icons.send_rounded, color: Colors.white),
+            tooltip: 'Direct Messages',
             onPressed: () {
               setState(() => _currentIndex = 3);
             },
@@ -86,27 +144,27 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home, color: Color(0xFF1E3A8A)),
-            label: 'Feed (FB/X)',
+            label: 'Feed',
           ),
           NavigationDestination(
             icon: Icon(Icons.play_circle_outline),
             selectedIcon: Icon(Icons.play_circle_fill, color: Colors.red),
-            label: 'Reels (TikTok)',
+            label: 'Reels',
           ),
           NavigationDestination(
             icon: Icon(Icons.trending_up),
             selectedIcon: Icon(Icons.trending_up, color: Color(0xFF1E3A8A)),
-            label: 'Explore (X)',
+            label: 'Explore',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_outlined),
             selectedIcon: Icon(Icons.chat, color: Colors.green),
-            label: 'Chats (WA)',
+            label: 'Chats',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person, color: Color(0xFF1E3A8A)),
-            label: 'Profile (Insta)',
+            label: 'Profile',
           ),
         ],
       ),
@@ -130,7 +188,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
     }
   }
 
-  // --- 1. Combined Social Feed (FB + X + Insta Stories) ---
+  // 1. Combined Social Feed (Facebook + X + Stories)
   Widget _buildCombinedFeed() {
     return ListView(
       children: [
@@ -150,12 +208,12 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
               _buildStoryItem('Star News', Icons.campaign, Colors.blue),
               _buildStoryItem('Trending', Icons.local_fire_department, Colors.orange),
               _buildStoryItem('Gujarat', Icons.location_city, Colors.green),
-              _buildStoryItem('Music', Icons.music_note, Colors.purple),
+              _buildStoryItem('Tech', Icons.computer, Colors.purple),
             ],
           ),
         ),
-        
-        // Post Creation Box (Facebook Style)
+
+        // Facebook Style Create Post Box
         Card(
           margin: const EdgeInsets.all(8),
           elevation: 1,
@@ -179,7 +237,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        "તમારા મનમાં શું છે? (Post / Tweet)...",
+                        "તમારા વિચારો પોસ્ટ કરો (Post / Tweet)...",
                         style: TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ),
@@ -190,35 +248,35 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
           ),
         ),
 
-        // Social Post 1 (Twitter/X Format)
+        // Twitter / X Format Post
         _buildTwitterPost(
           'Star India Official',
           '@starindia',
-          'નવું અપડેટ: હવે એક જ એપમાં તમામ સોશિયલ મીડિયા ફિચર્સ એક સાથે મળશે! 🚀 #StarIndia #AllInOne',
-          '120',
-          '45',
+          'નવું ઓલ-ઇન-વન સોશિયલ મીડિયા હબ હવે તૈયાર છે! તમામ ફીચર્સ એક જ જગ્યાએ ઉપલબ્ધ. 🚀 #StarIndia #NextGenApp',
+          '1.5K',
+          '240',
         ),
 
-        // Social Post 2 (Instagram/Facebook Format with Image placeholder)
+        // Instagram / Facebook Format Media Post
         _buildMediaPost(
-          'Vraj Limbani',
+          widget.userName,
           'અમદાવાદ, ગુજરાત',
-          'નવા પ્રોજેક્ટનું સત્તાવાર લોન્ચિંગ! આપ સૌનો સાથ અને સહકાર આવકાર્ય છે.',
-          '340',
-          '56',
+          'Star India પ્લેટફોર્મ પર આપનું સ્વાગત છે! કન્ટેન્ટ શેર કરો અને કનેક્ટ થાઓ.',
+          '4.2K',
+          '180',
         ),
       ],
     );
   }
 
-  // --- 2. Reels & Shorts Feed (TikTok / Insta Reels) ---
+  // 2. Reels & Shorts (TikTok / Insta Reels Style)
   Widget _buildReelsShortsFeed() {
     return PageView.builder(
       scrollDirection: Axis.vertical,
       itemCount: 5,
       itemBuilder: (context, index) {
         return Container(
-          color: Colors.black87,
+          color: Colors.black,
           child: Stack(
             children: [
               Center(
@@ -228,7 +286,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
                     const Icon(Icons.play_circle_outline, size: 80, color: Colors.white70),
                     const SizedBox(height: 12),
                     Text(
-                      'Star India Short / Reel #${index + 1}',
+                      'Star Reel / Short #${index + 1}',
                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const Text('સ્વાઇપ કરીને આગળની રીલ જુઓ', style: TextStyle(color: Colors.white60)),
@@ -243,12 +301,12 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '@creator_star_${index + 1}',
+                      '@star_creator_${index + 1}',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Star India પર શોર્ટ વિડીયો ક્રિએટર્સ માટે નવું પ્લેટફોર્મ #ViralReels #Trending',
+                      'Star India શોર્ટ વિડીયો પ્લેટફોર્મ #Viral #TrendingReels #StarIndia',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
@@ -259,9 +317,9 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
                 right: 16,
                 child: Column(
                   children: [
-                    _buildReelAction(Icons.favorite, '2.4K', Colors.red),
+                    _buildReelAction(Icons.favorite, '12.4K', Colors.red),
                     const SizedBox(height: 16),
-                    _buildReelAction(Icons.comment, '180', Colors.white),
+                    _buildReelAction(Icons.comment, '450', Colors.white),
                     const SizedBox(height: 16),
                     _buildReelAction(Icons.share, 'Share', Colors.white),
                   ],
@@ -274,21 +332,22 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
     );
   }
 
-  // --- 3. Explore & Trending (Twitter/X Style) ---
+  // 3. Explore & Trending (Twitter/X Hub)
   Widget _buildTrendingExplore() {
     List<Map<String, String>> trends = [
-      {'tag': '#StarIndiaApp', 'posts': '45.2K Posts', 'category': 'Trending in Gujarat'},
-      {'tag': '#AllInOnePlatform', 'posts': '28.1K Posts', 'category': 'Technology'},
-      {'tag': '#DigitalIndia', 'posts': '120K Posts', 'category': 'India Trends'},
-      {'tag': '#AhmedabadBusiness', 'posts': '14.5K Posts', 'category': 'Local Business'},
+      {'tag': '#StarIndiaApp', 'posts': '52.4K Posts', 'category': 'Trending in Gujarat'},
+      {'tag': '#AllInOnePlatform', 'posts': '31.2K Posts', 'category': 'Technology'},
+      {'tag': '#DigitalIndia', 'posts': '140K Posts', 'category': 'India Trends'},
+      {'tag': '#SocialMedia2026', 'posts': '22.8K Posts', 'category': 'Trending'},
     ];
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         TextField(
+          onChanged: (val) => setState(() => _searchQuery = val),
           decoration: InputDecoration(
-            hintText: 'Search hashtags, users or trends...',
+            hintText: 'સર્ચ કરો ટ્રેન્ડ્સ, પ્રોફાઇલ કે હેશટેગ...',
             prefixIcon: const Icon(Icons.search),
             filled: true,
             fillColor: Colors.grey.shade100,
@@ -297,7 +356,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
         ),
         const SizedBox(height: 20),
         const Text(
-          'Trends for you (Twitter/X Hub)',
+          'Trends for you (X / Twitter)',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
@@ -311,12 +370,12 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
     );
   }
 
-  // --- 4. WhatsApp Style Messenger ---
+  // 4. WhatsApp Style Messenger
   Widget _buildWhatsAppChats() {
     List<Map<String, String>> chats = [
-      {'name': 'Star India Support', 'msg': 'નમસ્તે, આપનું સ્વાગત છે.', 'time': '10:45 AM', 'unread': '1'},
-      {'name': 'Business Group', 'msg': 'નવી પોસ્ટ શેર કરવામાં આવી છે.', 'time': '09:12 AM', 'unread': '3'},
-      {'name': 'Gujarat Creators', 'msg': 'Reel અપલોડ સફળ થઈ ગઈ.', 'time': 'Yesterday', 'unread': '0'},
+      {'name': 'Star India Support', 'msg': 'નમસ્તે, આપનું એકાઉન્ટ સક્રિય થઈ ગયું છે.', 'time': '10:45 AM', 'unread': '1'},
+      {'name': 'ગુજરાત ક્રિએટર્સ ગ્રૂપ', 'msg': 'નવી પોસ્ટ શેર કરવામાં આવી છે.', 'time': '09:12 AM', 'unread': '3'},
+      {'name': 'Social Updates', 'msg': 'તમારી Reel ટ્રેન્ડિંગમાં છે.', 'time': 'Yesterday', 'unread': '0'},
     ];
 
     return ListView.separated(
@@ -347,7 +406,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
           ),
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${c['name']} સાથે ચેટ શરૂ થઈ')),
+              SnackBar(content: Text('${c['name']} સાથે ચેટ શરૂ કરો')),
             );
           },
         );
@@ -355,7 +414,7 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
     );
   }
 
-  // --- 5. Instagram Profile Style Screen ---
+  // 5. Instagram Style Profile
   Widget _buildInstagramProfile() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -367,21 +426,21 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
               backgroundColor: Color(0xFF1E3A8A),
               child: Icon(Icons.person, size: 50, color: Colors.white),
             ),
-            const Expanded(
+            Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _ProfileStat(count: '12', label: 'Posts'),
-                  _ProfileStat(count: '1.2K', label: 'Followers'),
-                  _ProfileStat(count: '340', label: 'Following'),
+                  _buildStatColumn('12', 'Posts'),
+                  _buildStatColumn('1.5K', 'Followers'),
+                  _buildStatColumn('320', 'Following'),
                 ],
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        const Text('Vraj Limbani', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const Text('Official Star India Creator Profile', style: TextStyle(color: Colors.grey)),
+        Text(widget.userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const Text('Official Star India Creator', style: TextStyle(color: Colors.grey)),
         const Text('🚀 All-in-One Social Experience Hub'),
         const SizedBox(height: 16),
         Row(
@@ -419,7 +478,16 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
     );
   }
 
-  // --- Helper Components ---
+  // Helpers
+  Widget _buildStatColumn(String count, String label) {
+    return Column(
+      children: [
+        Text(count, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+
   Widget _buildMyStoryItem() {
     return Container(
       margin: const EdgeInsets.only(right: 12),
@@ -505,64 +573,4 @@ class _MainSocialHubScreenState extends State<MainSocialHubScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: const CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.person, color: Colors.white)),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(location, style: const TextStyle(fontSize: 11)),
-            trailing: const Icon(Icons.more_vert),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            child: Text(text),
-          ),
-          Container(
-            height: 180,
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade900,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: Icon(Icons.image, size: 60, color: Colors.white54),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              children: [
-                IconButton(icon: const Icon(Icons.favorite_border, color: Colors.red), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.chat_bubble_outline), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.send_outlined), onPressed: () {}),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.bookmark_border), onPressed: () {}),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostAction(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        if (label.isNotEmpty) ...[
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildReelAction(IconData icon, String count, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
-        Text(count, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      ],
-    );
-  }
-
-  void _openCreatePostModal() {
-    showMo
+            leading: const CircleAvatar(backgr
