@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'feed_screen.dart';
 import 'reels_screen.dart';
 import 'explore_screen.dart';
-import 'chats_screen.dart';
+import 'chat_screen.dart';
 import 'profile_screen.dart';
 
 void main() async {
