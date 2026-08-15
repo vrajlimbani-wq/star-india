@@ -27,7 +27,7 @@ jobs:
 
       - name: Recreate Android Project
         run: |
-          flutter create --platforms=android .
+          flutter create --project-name=star_india --platforms=android .
           flutter pub get
 
       - name: Build APK
