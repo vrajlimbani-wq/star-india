@@ -1,13 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.star_india">
 
-    <!-- Permissions -->
+    <!-- નેટવર્ક અને ઈન્ટરનેટ પરમિશન -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- કેમેરા અને ઓડિયો પરમિશન (લાઈવ / વીડિયો કોલિંગ માટે) -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+
+    <!-- સ્ટોરેજ પરમિશન (જૂના અને નવા એન્ડ્રોઇડ વર્ઝન માટે) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
 
     <application
         android:label="Star India"
@@ -34,6 +42,7 @@
             </intent-filter>
         </activity>
 
+        <!-- Flutter V2 Embedding સપોર્ટ -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
