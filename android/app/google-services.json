@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "219020282945",
+    "project_id": "star-india-a377f",
+    "storage_bucket": "star-india-a377f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219020282945:android:82be9457eb99719125cac0",
+        "android_client_info": {
+          "package_name": "com.starindia.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "219020282945-grkmn9s75pq404irkcuouj63nsim70ao.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFWVCmLEW-3vmjQys5p4yj3JkjJJho2Cc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "219020282945-grkmn9s75pq404irkcuouj63nsim70ao.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
