@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_screen.dart';
@@ -57,6 +58,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
   late String _activeProfile;
   String _searchQuery = "";
+
+  final String appDownloadUrl = "https://github.com/vrajlimbani-wq/star-india/releases";
 
   @override
   void initState() {
@@ -131,6 +134,16 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
+  void _copyAppDownloadLink() {
+    Clipboard.setData(ClipboardData(text: appDownloadUrl));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Star India ઍપ ડાઉનલોડ લિંક કૉપી થઈ ગઈ છે!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,12 +182,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('QR સ્કેનર જલ્દી ઉપલબ્ધ થશે')),
-              );
-            },
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: _copyAppDownloadLink,
           ),
         ],
       ),
@@ -229,7 +238,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     }
   }
 
-  // --- 1. Personal Feed ---
+  // --- 1. Personal Feed with App Promotion ---
   Widget _buildPersonalFeed() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -254,7 +263,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                       'નમસ્તે, ${widget.userName}',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    const Text('પર્સનલ ફીડ અને ઉપલબ્ધ સેવાઓ', style: TextStyle(color: Colors.grey)),
+                    const Text('Star India પ્લેટફોર્મ પર આપનું સ્વાગત છે', style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ],
@@ -270,7 +279,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics),
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
           children: [
@@ -284,14 +293,76 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         ),
         const SizedBox(height: 20),
         const Text(
-          'તાજેતરની અપડેટ્સ અને પોસ્ટ્સ',
+          'Star India ઍપ સ્પેશિયલ',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        _buildFeedCard(
-          'સ્ટાર ઇન્ડિયા કન્સ્ટ્રક્શન અપડેટ',
-          'અમદાવાદ અને આસપાસના વિસ્તારમાં નવા પ્રોજેક્ટ માટે ઉપલબ્ધ પ્લાનિંગ અને કોન્ટ્રાક્ટ વર્ક.',
-          Icons.apartment,
+        
+        // --- Star India App Promo Card ---
+        Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.stars, color: Colors.amber, size: 28),
+                    SizedBox(width: 8),
+                    Text(
+                      'Star India Official App',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'તમામ વ્યાવસાયિક સેવાઓ, કારીગરો, વેપાર અને મટિરિયલ માટેનું એકમાત્ર વિશ્વસનીય પ્લેટફોર્મ. તમારા મિત્રો અને વેપારીઓ સાથે ઍપ શેર કરો.',
+                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _copyAppDownloadLink,
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text('લિંક કૉપી કરો', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _copyAppDownloadLink,
+                        icon: const Icon(Icons.share, size: 18),
+                        label: const Text('શેર કરો'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -344,9 +415,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                _showAddProductDialog();
-              },
+              onPressed: () => _showAddProductDialog(),
               icon: const Icon(Icons.add, size: 16),
               label: const Text('નવું ઉમેરો'),
               style: ElevatedButton.styleFrom(
@@ -357,8 +426,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        _buildProductCard('રેસિડેન્શિયલ કન્સ્ટ્રક્શન સર્વિસ', 'અમદાવાદ', 'Active'),
-        _buildProductCard('સિવિલ & ઇન્ટિરિયર વર્ક પેકેજ', 'નરોડા / નિકોલ', 'Active'),
+        _buildProductCard('Star India સર્વિસ પાર્ટનર', 'ઓલ ઇન્ડિયા', 'Active'),
+        _buildProductCard('વેરીફાઇડ બિઝનેસ પ્રોફાઇલ', 'ગુજરાત', 'Active'),
       ],
     );
   }
@@ -366,12 +435,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   // --- 3. Search Screen ---
   Widget _buildSearchScreen() {
     List<String> items = [
+      'Star India ઓફિશિયલ ઍપ',
       'કન્સ્ટ્રક્શન સેવાઓ',
       'ઇન્ટિરિયર ડિઝાઇનિંગ',
       'ટ્રાન્સપોર્ટ & લોજિસ્ટિક્સ',
       'કુશળ કારીગરો & લેબર',
-      'બિલ્ડિંગ મટિરિયલ સપ્લાય',
-      'પ્લાનિંગ & આર્કિટેક્ચરલ વર્ક'
+      'બિલ્ડિંગ મટિરિયલ સપ્લાય'
     ];
 
     List<String> filtered = items
@@ -380,33 +449,35 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      children: [
-        TextField(
-          onChanged: (val) => setState(() => _searchQuery = val),
-          decoration: InputDecoration(
-            hintText: 'સર્વિસ કે મટિરિયલ શોધો...',
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.grey.shade100,
+      child: Column(
+        children: [
+          TextField(
+            onChanged: (val) => setState(() => _searchQuery = val),
+            decoration: InputDecoration(
+              hintText: 'સર્વિસ કે બિઝનેસ શોધો...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+            ),
           ),
-        ),
-        const SizedBox(height: 15),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filtered.length,
-            itemBuilder: (context, idx) {
-              return ListTile(
-                leading: const Icon(Icons.arrow_forward_ios, size: 16),
-                title: Text(filtered[idx]),
-                onTap: () {
-                  _openCategoryPage(filtered[idx], Icons.check_circle_outline);
-                },
-              );
-            },
+          const SizedBox(height: 15),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (context, idx) {
+                return ListTile(
+                  leading: const Icon(Icons.arrow_forward_ios, size: 16),
+                  title: Text(filtered[idx]),
+                  onTap: () {
+                    _openCategoryPage(filtered[idx], Icons.check_circle_outline);
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -420,8 +491,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             backgroundColor: Colors.indigo,
             child: Icon(Icons.notifications, color: Colors.white),
           ),
-          title: Text('સ્ટાર ઇન્ડિયામાં તમારું સ્વાગત છે!'),
-          subtitle: Text('તમારી પ્રોફાઇલ અને ડેટાબેઝ સેટઅપ સફળ થઈ ગયું છે.'),
+          title: Text('Star India માં આપનું સ્વાગત છે!'),
+          subtitle: Text('તમારી પ્રોફાઇલ સેટઅપ સફળ થઈ ગઈ છે.'),
         ),
       ],
     );
@@ -455,6 +526,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           title: const Text('પ્રોફાઇલ મોડ બદલો'),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: _showProfileSwitchModal,
+        ),
+        ListTile(
+          leading: const Icon(Icons.share, color: Colors.green),
+          title: const Text('ઍપ ડાઉનલોડ લિંક શેર કરો'),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          onTap: _copyAppDownloadLink,
         ),
         const Divider(),
         ListTile(
@@ -504,34 +581,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  Widget _buildFeedCard(String title, String desc, IconData icon) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _openCategoryPage(title, icon),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: const Color(0xFF1E3A8A)),
-                  const SizedBox(width: 8),
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(desc, style: const TextStyle(color: Colors.black87)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildStatCard(String title, String value, Color color) {
     return Expanded(
       child: Container(
@@ -539,83 +588,4 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 11, color: Colors.black54)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductCard(String title, String location, String status) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: const Icon(Icons.business_center, color: Color(0xFF1E3A8A)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(location),
-        trailing: Chip(
-          label: Text(status, style: const TextStyle(color: Colors.white, fontSize: 11)),
-          backgroundColor: Colors.green,
-          padding: EdgeInsets.zero,
-        ),
-      ),
-    );
-  }
-
-  void _showAddProductDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('નવી સર્વિસ ઉમેરો'),
-          content: const Text('તમારી નવી સર્વિસ અથવા પ્રોડક્ટની વિગતો અહીંથી એન્ટર કરી શકાશે.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('ઓકે'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// --- Category Detail Page ---
-class CategoryDetailScreen extends StatelessWidget {
-  final String categoryName;
-  final IconData categoryIcon;
-
-  const CategoryDetailScreen({
-    super.key,
-    required this.categoryName,
-    required this.categoryIcon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(categoryName),
-        backgroundColor: const Color(0xFF1E3A8A),
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Center(
-              child: CircleAvatar(
-                radius: 45,
-                backgroundColor: Colors.blue.shade100,
-                child: Icon(categoryIcon, size: 50, color: const Color(0xFF1E3A8A)),
-              ),
-            ),
-      
+          border: Border.all(color: color.withOpacity(
