@@ -12,17 +12,97 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late String _currentName;
+  String _userBio = "Official Star India Profile";
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _currentName = widget.userName;
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Edit Profile Dialog
+  void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: _currentName);
+    final bioController = TextEditingController(text: _userBio);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'નામ (Name)'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: bioController,
+              decoration: const InputDecoration(labelText: 'બાયો (Bio)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _currentName = nameController.text.trim().isNotEmpty ? nameController.text.trim() : _currentName;
+                _userBio = bioController.text.trim().isNotEmpty ? bioController.text.trim() : _userBio;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('પ્રોફાઇલ સફળતાપૂર્વક અપડેટ થઈ!')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Share Profile Sheet
+  void _shareProfile() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Share Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.copy, color: Color(0xFF1E3A8A)),
+              title: const Text('પ્રોફાઇલ લિંક કોપી કરો'),
+              subtitle: Text('starindia.app/user/${_currentName.replaceAll(" ", "").toLowerCase()}'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('પ્રોફાઇલ લિંક કોપી થઈ ગઈ!')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -58,27 +138,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      widget.userName,
+                      _currentName,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Official Star India Profile',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    Text(
+                      _userBio,
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {},
+                            onPressed: _showEditProfileDialog,
                             child: const Text('Edit Profile'),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {},
+                            onPressed: _shareProfile,
                             child: const Text('Share Profile'),
                           ),
                         ),
@@ -123,7 +203,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         body: TabBarView(
           controller: _tabController,
           children: [
-            // Posts Grid Tab
             GridView.builder(
               padding: const EdgeInsets.all(2),
               itemCount: 12,
@@ -139,7 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 );
               },
             ),
-            // Reels/Videos Grid Tab
             GridView.builder(
               padding: const EdgeInsets.all(2),
               itemCount: 6,
