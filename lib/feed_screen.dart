@@ -50,7 +50,7 @@ class FeedScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        "તમારા વિચારો પોસ્ટ કરો (Post / Tweet)...",
+                        "તમારા વિચારો પોસ્ટ કરો (Create Post)...",
                         style: TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ),
