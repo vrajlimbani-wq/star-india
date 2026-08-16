@@ -9,13 +9,47 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  // Pull to refresh ફંક્શન
   Future<void> _handleRefresh() async {
-    // અહીં નવો ડેટા ફેચ થવા માટે 2 સેકન્ડનો ડિલે સેટ કર્યો છે
     await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      // અહીં નવો ડેટા રીલોડ થશે
-    });
+    setState(() {});
+  }
+
+  // Story Viewer
+  void _openStory(String title, Color color, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          height: 400,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                content,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -25,7 +59,7 @@ class _FeedScreenState extends State<FeedScreen> {
       backgroundColor: Colors.white,
       onRefresh: _handleRefresh,
       child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(), // સ્ક્રોલ અને રીફ્રેશ સ્મૂધ ચાલવા માટે
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
           Container(
             height: 105,
@@ -39,10 +73,10 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 const SizedBox(width: 12),
                 _buildMyStory(),
-                _buildStory('Star News', Icons.campaign, Colors.blue),
-                _buildStory('Trending', Icons.local_fire_department, Colors.orange),
-                _buildStory('Gujarat', Icons.location_city, Colors.green),
-                _buildStory('Tech', Icons.computer, Colors.purple),
+                _buildStory('Star News', Icons.campaign, Colors.blue, "આજના તાજા સમાચાર અને Star India પ્લેટફોર્મના લેટેસ્ટ અપડેટ્સ!"),
+                _buildStory('Trending', Icons.local_fire_department, Colors.orange, "ગુજરાત અને ભારતમાં સૌથી વધુ ચર્ચાતા ટ્રેન્ડિંગ વિષયો!"),
+                _buildStory('Gujarat', Icons.location_city, Colors.green, "અમદાવાદ અને સમગ્ર ગુજરાતના ખાસ સાંસ્કૃતિક અને લોકલ અપડેટ્સ."),
+                _buildStory('Tech', Icons.computer, Colors.purple, "ટેકનોલોજી અને નવા ફીચર્સ વિશેની માહિતી."),
               ],
             ),
           ),
@@ -88,11 +122,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 children: [
                   const Row(
                     children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.black,
-                        child: Icon(Icons.tag, size: 16, color: Colors.white),
-                      ),
+                      CircleAvatar(radius: 16, backgroundColor: Colors.black, child: Icon(Icons.tag, size: 16, color: Colors.white)),
                       SizedBox(width: 8),
                       Text('Star India Official', style: TextStyle(fontWeight: FontWeight.bold)),
                       SizedBox(width: 6),
@@ -121,10 +151,7 @@ class _FeedScreenState extends State<FeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Color(0xFF1E3A8A),
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
+                  leading: CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.person, color: Colors.white)),
                   title: Text('Vraj Limbani', style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('અમદાવાદ, ગુજરાત', style: TextStyle(fontSize: 11)),
                 ),
@@ -135,13 +162,8 @@ class _FeedScreenState extends State<FeedScreen> {
                 Container(
                   height: 160,
                   margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.image, size: 60, color: Colors.white54),
-                  ),
+                  decoration: BoxDecoration(color: const Color(0xFF1E3A8A), borderRadius: BorderRadius.circular(10)),
+                  child: const Center(child: Icon(Icons.image, size: 60, color: Colors.white54)),
                 ),
               ],
             ),
@@ -152,40 +174,42 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildMyStory() {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: const Column(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(radius: 26, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white)),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(radius: 8, backgroundColor: Colors.blue, child: Icon(Icons.add, size: 12, color: Colors.white)),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Text('Your Story', style: TextStyle(fontSize: 11)),
-        ],
+    return InkWell(
+      onTap: widget.onAddPost,
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        child: const Column(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(radius: 26, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white)),
+                Positioned(bottom: 0, right: 0, child: CircleAvatar(radius: 8, backgroundColor: Colors.blue, child: Icon(Icons.add, size: 12, color: Colors.white))),
+              ],
+            ),
+            SizedBox(height: 4),
+            Text('Your Story', style: TextStyle(fontSize: 11)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStory(String title, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.pink, width: 2)),
-            child: CircleAvatar(radius: 24, backgroundColor: color, child: Icon(icon, color: Colors.white, size: 20)),
-          ),
-          const SizedBox(height: 4),
-          Text(title, style: const TextStyle(fontSize: 11)),
-        ],
+  Widget _buildStory(String title, IconData icon, Color color, String content) {
+    return InkWell(
+      onTap: () => _openStory(title, color, content),
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.pink, width: 2)),
+              child: CircleAvatar(radius: 24, backgroundColor: color, child: Icon(icon, color: Colors.white, size: 20)),
+            ),
+            const SizedBox(height: 4),
+            Text(title, style: const TextStyle(fontSize: 11)),
+          ],
+        ),
       ),
     );
   }
