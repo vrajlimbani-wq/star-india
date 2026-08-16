@@ -7,9 +7,8 @@ import 'explore_screen.dart';
 import 'reels_screen.dart';
 import 'profile_screen.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   runApp(const StarIndiaApp());
 }
 
@@ -26,20 +25,54 @@ class StarIndiaApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
       ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
+      home: FutureBuilder(
+        future: Firebase.initializeApp(),
         builder: (context, snapshot) {
+          // If Firebase is still initializing
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
+              backgroundColor: Colors.white,
               body: Center(
                 child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
               ),
             );
           }
-          if (snapshot.hasData) {
-            return const MainNavigationScreen();
+
+          // If Firebase failed to initialize
+          if (snapshot.hasError) {
+            return Scaffold(
+              backgroundColor: Colors.white,
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'Firebase શરૂ કરવામાં ભૂલ આવી:\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
+            );
           }
-          return const AuthScreen();
+
+          // Once Firebase is initialized, listen to Auth state
+          return StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, authSnapshot) {
+              if (authSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  backgroundColor: Colors.white,
+                  body: Center(
+                    child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+                  ),
+                );
+              }
+              if (authSnapshot.hasData) {
+                return const MainNavigationScreen();
+              }
+              return const AuthScreen();
+            },
+          );
         },
       ),
     );
