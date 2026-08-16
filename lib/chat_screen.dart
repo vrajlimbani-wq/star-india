@@ -30,7 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _currentUid.isEmpty) return;
+    if (text.isEmpty || _currentUid.isEmpty || widget.peerUid.isEmpty) return;
 
     _messageController.clear();
 
@@ -60,6 +60,89 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.peerUid.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1E3A8A),
+          elevation: 0,
+          title: const Text(
+            'Star Chats',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+        ),
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+              );
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Center(
+                child: Text('કોઈ અન્ય યુઝર્સ મળ્યા નથી.', style: TextStyle(color: Colors.grey)),
+              );
+            }
+
+            final users = snapshot.data!.docs.where((doc) => doc.id != _currentUid).toList();
+
+            if (users.isEmpty) {
+              return const Center(
+                child: Text('વાતચીત કરવા માટે અન્ય યુઝર્સ ઉપલબ્ધ નથી.', style: TextStyle(color: Colors.grey)),
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: users.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+              itemBuilder: (context, index) {
+                final uData = users[index].data() as Map<String, dynamic>;
+                final uid = users[index].id;
+                final name = uData['fullName'] ??
+                    '${uData['firstName'] ?? ''} ${uData['lastName'] ?? ''}'.trim();
+                final displayName = name.isNotEmpty ? name : 'Star User';
+                final profession = uData['designation'] ?? uData['professionType'] ?? 'Star Member';
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: const Color(0xFF1E3A8A),
+                    child: Text(
+                      displayName[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                  title: Text(
+                    displayName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  subtitle: Text(
+                    profession,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                  trailing: const Icon(Icons.chat_bubble_outline, color: Color(0xFF1E3A8A), size: 22),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(peerUid: uid, peerName: displayName),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -80,12 +163,33 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              widget.peerName,
-              style: const TextStyle(color: Color(0xFF1E3A8A), fontSize: 16, fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                widget.peerName,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xFF1E3A8A), fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call_outlined, color: Color(0xFF1E3A8A)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ઓડિયો કોલિંગ ટૂંક સમયમાં શરૂ થશે!')),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam_outlined, color: Color(0xFF1E3A8A)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('વિડિઓ કોલિંગ ટૂંક સમયમાં શરૂ થશે!')),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -153,6 +257,14 @@ class _ChatScreenState extends State<ChatScreen> {
             child: SafeArea(
               child: Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.attach_file, color: Color(0xFF1E3A8A)),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('ફાઈલ અને ડોક્યુમેન્ટ શેરિંગ ઓપ્શન')),
+                      );
+                    },
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _messageController,
