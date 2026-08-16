@@ -1,213 +1,186 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ChatsScreen extends StatefulWidget {
-  const ChatsScreen({super.key});
+class ChatScreen extends StatefulWidget {
+  final String peerUid;
+  final String peerName;
 
-  @override
-  State<ChatsScreen> createState() => _ChatsScreenState();
-}
-
-class _ChatsScreenState extends State<ChatsScreen> {
-  final List<Map<String, dynamic>> _chats = [
-    {
-      'name': 'Star India Support',
-      'msg': 'નમસ્તે, આપનું સ્વાગત છે.',
-      'time': '10:45 AM',
-      'unread': '1',
-      'isOnline': true,
-    },
-    {
-      'name': 'ગુજરાત ક્રિએટર્સ ગ્રૂપ',
-      'msg': 'નવી પોસ્ટ શેર કરવામાં આવી છે.',
-      'time': '09:12 AM',
-      'unread': '3',
-      'isOnline': false,
-    },
-    {
-      'name': 'Social Updates',
-      'msg': 'તમારી Reel ટ્રેન્ડિંગમાં છે.',
-      'time': 'Yesterday',
-      'unread': '0',
-      'isOnline': false,
-    },
-  ];
-
-  Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {});
-  }
-
-  // Active Chat Screen ખોલવા માટે
-  void _openChatRoom(String chatName) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatRoomScreen(title: chatName),
-      ),
-    );
-  }
+  const ChatScreen({
+    super.key,
+    required this.peerUid,
+    required this.peerName,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: RefreshIndicator(
-        color: const Color(0xFF1E3A8A),
-        backgroundColor: Colors.white,
-        onRefresh: _handleRefresh,
-        child: ListView.separated(
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: _chats.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final c = _chats[index];
-            return ListTile(
-              leading: Stack(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: const Color(0xFF1E3A8A),
-                    child: Text(
-                      c['name'][0],
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  if (c['isOnline'] == true)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(
-                c['msg'],
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: c['unread'] != '0' ? Colors.black87 : Colors.grey.shade600,
-                  fontWeight: c['unread'] != '0' ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    c['time'],
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: c['unread'] != '0' ? Colors.green : Colors.grey,
-                      fontWeight: c['unread'] != '0' ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                  if (c['unread'] != '0')
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                      child: Text(
-                        c['unread'],
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                ],
-              ),
-              onTap: () => _openChatRoom(c['name']),
-            );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openChatRoom("New Chat"),
-        backgroundColor: const Color(0xFF1E3A8A),
-        child: const Icon(Icons.chat, color: Colors.white),
-      ),
-    );
-  }
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
-// ચેટિંગ રૂમ વ્યુ
-class ChatRoomScreen extends StatefulWidget {
-  final String title;
-  const ChatRoomScreen({super.key, required this.title});
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  @override
-  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
-}
-
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  final TextEditingController _msgController = TextEditingController();
-  final List<String> _messages = ["નમસ્તે, Star India માં આપનું સ્વાગત છે!"];
-
-  void _sendMessage() {
-    if (_msgController.text.trim().isNotEmpty) {
-      setState(() {
-        _messages.add(_msgController.text.trim());
-        _msgController.clear();
-      });
+  String get _chatRoomId {
+    if (_currentUid.compareTo(widget.peerUid) > 0) {
+      return '${_currentUid}_${widget.peerUid}';
+    } else {
+      return '${widget.peerUid}_$_currentUid';
     }
   }
 
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _currentUid.isEmpty) return;
+
+    _messageController.clear();
+
+    final messageData = {
+      'senderId': _currentUid,
+      'receiverId': widget.peerUid,
+      'text': text,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    final chatRoomRef = FirebaseFirestore.instance.collection('chat_rooms').doc(_chatRoomId);
+
+    // Add message to subcollection
+    await chatRoomRef.collection('messages').add(messageData);
+
+    // Update last message in chat room
+    await chatRoomRef.set({
+      'users': [_currentUid, widget.peerUid],
+      'lastMessage': text,
+      'lastMessageAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF1E3A8A),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E3A8A)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: const Color(0xFF1E3A8A),
+              child: Text(
+                widget.peerName.isNotEmpty ? widget.peerName[0].toUpperCase() : 'U',
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              widget.peerName,
+              style: const TextStyle(color: Color(0xFF1E3A8A), fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E3A8A),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Text(_messages[index], style: const TextStyle(color: Colors.white)),
-                  ),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('chat_rooms')
+                  .doc(_chatRoomId)
+                  .collection('messages')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('હજુ કોઈ મેસેજ નથી. વાતચીત શરૂ કરો!', style: TextStyle(color: Colors.grey)),
+                  );
+                }
+
+                final messages = snapshot.data!.docs;
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = messages[index].data() as Map<String, dynamic>;
+                    final isMe = msg['senderId'] == _currentUid;
+
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isMe ? const Color(0xFF1E3A8A) : Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(14),
+                            topRight: const Radius.circular(14),
+                            bottomLeft: isMe ? const Radius.circular(14) : const Radius.circular(0),
+                            bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(14),
+                          ),
+                          border: isMe ? null : Border.side(color: Colors.grey.shade200),
+                        ),
+                        child: Text(
+                          msg['text'] ?? '',
+                          style: TextStyle(
+                            color: isMe ? Colors.white : Colors.black87,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _msgController,
-                    decoration: InputDecoration(
-                      hintText: 'મેસેજ લખો...',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            color: Colors.white,
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'મેસેજ લખો...',
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFF1E3A8A)),
-                  onPressed: _sendMessage,
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFF1E3A8A),
+                    radius: 22,
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _sendMessage,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
