@@ -33,8 +33,8 @@ class _AuthScreenState extends State<AuthScreen> {
   final _twitterLinkController = TextEditingController();
 
   DateTime? _selectedBirthDate;
-  String _selectedEducation = "primary";
-  String _selectedProfessionType = "business";
+  String _selectedEducation = "Primary / Basic";
+  String _selectedProfessionType = "Business";
   String _selectedProfile = "Personal";
 
   bool _isLogin = false;
@@ -64,7 +64,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t('err_pwd_len'))),
+        SnackBar(content: Text(t('e_pwd'))),
       );
       return;
     }
@@ -75,7 +75,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_isLogin) {
         final identifier = _loginIdentifierController.text.trim();
         if (identifier.isEmpty) {
-          throw Exception(t('err_empty_login'));
+          throw Exception(t('e_login'));
         }
 
         String authEmail = identifier;
@@ -94,11 +94,11 @@ class _AuthScreenState extends State<AuthScreen> {
         final phone = _primaryPhoneController.text.trim();
 
         if (firstName.isEmpty || (email.isEmpty && phone.isEmpty)) {
-          throw Exception(t('err_empty_name'));
+          throw Exception(t('e_req'));
         }
 
         if (phone.isNotEmpty && phone.length != 10) {
-          throw Exception(t('err_phone_invalid'));
+          throw Exception(t('e_phone'));
         }
 
         String authEmail = email.isNotEmpty ? email : '$phone@starindia.app';
@@ -190,7 +190,7 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         title: Text(
-          t(_isLogin ? 'app_title_login' : 'app_title_signup'),
+          t(_isLogin ? 'title_login' : 'title_signup'),
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color(0xFF1E3A8A),
@@ -210,7 +210,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              t(_isLogin ? 'header_login' : 'header_signup'),
+              t(_isLogin ? 'head_login' : 'head_signup'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
             ),
             const SizedBox(height: 20),
@@ -226,7 +226,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextField(
                         controller: _loginIdentifierController,
                         decoration: InputDecoration(
-                          labelText: t('login_id_label'),
+                          labelText: t('login_id'),
                           prefixIcon: const Icon(Icons.person_outline),
                           border: const OutlineInputBorder(),
                         ),
@@ -236,27 +236,27 @@ class _AuthScreenState extends State<AuthScreen> {
                         controller: _passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
-                          labelText: t('login_pwd_label'),
+                          labelText: t('pwd'),
                           prefixIcon: const Icon(Icons.lock_outline),
                           border: const OutlineInputBorder(),
                         ),
                       ),
                     ] else ...[
-                      Text(t('sec_personal'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                      Text(t('sec_p'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _firstNameController,
-                              decoration: InputDecoration(labelText: t('first_name'), border: const OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: t('fn'), border: const OutlineInputBorder()),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
                               controller: _lastNameController,
-                              decoration: InputDecoration(labelText: t('last_name'), border: const OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: t('ln'), border: const OutlineInputBorder()),
                             ),
                           ),
                         ],
@@ -270,8 +270,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         leading: const Icon(Icons.calendar_month, color: Color(0xFF1E3A8A)),
                         title: Text(
                           _selectedBirthDate == null
-                              ? t('pick_birthdate')
-                              : '${t('birthdate_is')} ${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}',
+                              ? t('dob_pick')
+                              : '${t('dob_val')} ${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}',
                         ),
                         trailing: const Icon(Icons.arrow_drop_down),
                         onTap: () => _selectBirthDate(context),
@@ -290,94 +290,94 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 14),
                       TextField(
                         controller: _hobbiesController,
-                        decoration: InputDecoration(labelText: t('hobbies'), prefixIcon: const Icon(Icons.favorite_border), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('hobby'), prefixIcon: const Icon(Icons.favorite_border), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 24),
-                      Text(t('sec_work'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                      Text(t('sec_w'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: _selectedEducation,
-                        decoration: InputDecoration(labelText: t('edu_label'), border: const OutlineInputBorder()),
-                        items: [
-                          DropdownMenuItem(value: 'primary', child: Text(t('edu_primary'))),
-                          DropdownMenuItem(value: 'secondary', child: Text(t('edu_secondary'))),
-                          DropdownMenuItem(value: 'higher_sec', child: Text(t('edu_higher_sec'))),
-                          DropdownMenuItem(value: 'college', child: Text(t('edu_college'))),
-                          DropdownMenuItem(value: 'higher_college', child: Text(t('edu_higher_college'))),
-                          DropdownMenuItem(value: 'degree', child: Text(t('edu_degree'))),
+                        decoration: InputDecoration(labelText: t('edu'), border: const OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'Primary / Basic', child: Text('Primary / Basic')),
+                          DropdownMenuItem(value: 'Secondary', child: Text('Secondary (10th)')),
+                          DropdownMenuItem(value: 'Higher Secondary', child: Text('Higher Secondary (12th)')),
+                          DropdownMenuItem(value: 'Graduate / College', child: Text('Graduate / College')),
+                          DropdownMenuItem(value: 'Post Graduate', child: Text('Post Graduate')),
+                          DropdownMenuItem(value: 'Professional Degree', child: Text('Professional Degree')),
                         ],
                         onChanged: (val) => setState(() => _selectedEducation = val!),
                       ),
                       const SizedBox(height: 14),
                       DropdownButtonFormField<String>(
                         value: _selectedProfessionType,
-                        decoration: InputDecoration(labelText: t('prof_label'), border: const OutlineInputBorder()),
-                        items: [
-                          DropdownMenuItem(value: 'business', child: Text(t('prof_business'))),
-                          DropdownMenuItem(value: 'private', child: Text(t('prof_private'))),
-                          DropdownMenuItem(value: 'govt', child: Text(t('prof_govt'))),
-                          DropdownMenuItem(value: 'freelance', child: Text(t('prof_freelance'))),
-                          DropdownMenuItem(value: 'student', child: Text(t('prof_student'))),
+                        decoration: InputDecoration(labelText: t('prof'), border: const OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'Business', child: Text('Business / Self-Employed')),
+                          DropdownMenuItem(value: 'Private Job', child: Text('Private Job')),
+                          DropdownMenuItem(value: 'Govt Job', child: Text('Government Job')),
+                          DropdownMenuItem(value: 'Freelancer', child: Text('Freelancer / Professional')),
+                          DropdownMenuItem(value: 'Student', child: Text('Student')),
                         ],
                         onChanged: (val) => setState(() => _selectedProfessionType = val!),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _companyOrGovtController,
-                        decoration: InputDecoration(labelText: t('company_name'), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('comp'), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _designationController,
-                        decoration: InputDecoration(labelText: t('designation'), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('desig'), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 24),
-                      Text(t('sec_contact'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                      Text(t('sec_c'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       TextField(
                         controller: _primaryPhoneController,
                         keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(labelText: t('phone_label'), prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('phone'), prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _secondaryPhoneController,
                         keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(labelText: t('sec_phone_label'), prefixIcon: const Icon(Icons.phone_android), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('phone2'), prefixIcon: const Icon(Icons.phone_android), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(labelText: t('email_label'), prefixIcon: const Icon(Icons.email_outlined), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('email'), prefixIcon: const Icon(Icons.email_outlined), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(labelText: t('pwd_label'), prefixIcon: const Icon(Icons.lock_outline), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('pwd'), prefixIcon: const Icon(Icons.lock_outline), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 24),
-                      Text(t('sec_social'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                      Text(t('sec_s'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       TextField(
                         controller: _whatsappLinkController,
-                        decoration: InputDecoration(labelText: t('whatsapp'), prefixIcon: const Icon(Icons.chat), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('wa'), prefixIcon: const Icon(Icons.chat), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _instagramLinkController,
-                        decoration: InputDecoration(labelText: t('instagram'), prefixIcon: const Icon(Icons.camera_alt_outlined), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('insta'), prefixIcon: const Icon(Icons.camera_alt_outlined), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _facebookLinkController,
-                        decoration: InputDecoration(labelText: t('facebook'), prefixIcon: const Icon(Icons.facebook), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('fb'), prefixIcon: const Icon(Icons.facebook), border: const OutlineInputBorder()),
                       ),
                       const SizedBox(height: 14),
                       TextField(
                         controller: _twitterLinkController,
-                        decoration: InputDecoration(labelText: t('twitter'), prefixIcon: const Icon(Icons.alternate_email), border: const OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: t('tw'), prefixIcon: const Icon(Icons.alternate_email), border: const OutlineInputBorder()),
                       ),
                     ],
                     const SizedBox(height: 28),
@@ -393,7 +393,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               onPressed: _submitAuth,
                               child: Text(
-                                t(_isLogin ? 'btn_login' : 'btn_signup'),
+                                t(_isLogin ? 'btn_l' : 'btn_s'),
                                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -406,7 +406,7 @@ class _AuthScreenState extends State<AuthScreen> {
             TextButton(
               onPressed: () => setState(() => _isLogin = !_isLogin),
               child: Text(
-                t(_isLogin ? 'switch_to_signup' : 'switch_to_login'),
+                t(_isLogin ? 'sw_s' : 'sw_l'),
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
               ),
             ),
