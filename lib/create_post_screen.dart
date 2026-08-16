@@ -1,239 +1,122 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  final String initialType;
-
-  const CreatePostScreen({super.key, this.initialType = 'post'});
+  const CreatePostScreen({super.key});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final TextEditingController _captionController = TextEditingController();
-  File? _selectedMedia;
+  final TextEditingController _postController = TextEditingController();
   bool _isLoading = false;
-  final ImagePicker _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedMedia = File(pickedFile.path);
-      });
-    }
-  }
+  Future<void> _submitPost() async {
+    final text = _postController.text.trim();
+    if (text.isEmpty) return;
 
-  Future<void> _pickVideo() async {
-    final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedMedia = File(pickedFile.path);
-      });
-    }
-  }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  Future<void> _uploadContent() async {
-    if (_selectedMedia == null && _captionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('કૃપા કરીને મીડિયા અથવા લખાણ ઉમેરો')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      String? mediaUrl;
-      final user = FirebaseAuth.instance.currentUser;
-      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      final bool isVideo = widget.initialType != 'post';
-      final String collectionName = widget.initialType == 'reel'
-          ? 'reels'
-          : widget.initialType == 'story'
-              ? 'stories'
-              : 'posts';
+      // Fetch current user details from Firestore
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final userData = userDoc.data() ?? {};
 
-      if (_selectedMedia != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child(collectionName)
-            .child('${user?.uid ?? "guest"}_$timestamp.${isVideo ? "mp4" : "jpg"}');
+      final authorName = userData['fullName'] ??
+          '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+      final authorProfession = userData['designation'] ?? userData['professionType'] ?? '';
 
-        await ref.putFile(_selectedMedia!);
-        mediaUrl = await ref.getDownloadURL();
-      }
-
-      await FirebaseFirestore.instance.collection(collectionName).add({
-        'userId': user?.uid ?? 'guest',
-        'userName': user?.displayName ?? 'Vraj Limbani',
-        'caption': _captionController.text.trim(),
-        'mediaUrl': mediaUrl ?? '',
-        'type': widget.initialType,
-        'likesCount': 0,
-        'commentsCount': 0,
+      // Save post in 'posts' collection
+      await FirebaseFirestore.instance.collection('posts').add({
+        'authorUid': user.uid,
+        'authorName': authorName.isNotEmpty ? authorName : 'Star User',
+        'authorProfession': authorProfession,
+        'content': text,
+        'likes': [],
         'createdAt': FieldValue.serverTimestamp(),
-        if (widget.initialType == 'story')
-          'expiresAt': DateTime.now().add(const Duration(hours: 24)),
       });
 
       if (mounted) {
-        String successMsg = 'પોસ્ટ સફળતાપૂર્વક અપલોડ થઈ!';
-        if (widget.initialType == 'reel') successMsg = 'Reel સફળતાપૂર્વક અપલોડ થઈ!';
-        if (widget.initialType == 'story') successMsg = 'Status / Story સફળતાપૂર્વક અપલોડ થઈ!';
-
+        _postController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(successMsg)),
+          const SnackBar(content: Text('પોસ્ટ સફળતાપૂર્વક અપલોડ થઈ ગઈ!')),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('અપલોડમાં એરર આવી: $e')),
+          SnackBar(content: Text('ભૂલ આવી: $e')),
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   void dispose() {
-    _captionController.dispose();
+    _postController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    String appBarTitle = 'નવી પોસ્ટ બનાવો';
-    String hintText = 'તમારા વિચારો અથવા કેપ્શન અહીં લખો...';
-    Color primaryColor = const Color(0xFF1E3A8A);
-
-    if (widget.initialType == 'reel') {
-      appBarTitle = 'નવી Reel / શોર્ટ વિડિયો અપલોડ કરો';
-      hintText = 'Reel માટે કેપ્શન અને હેશટેગ (#) ઉમેરો...';
-      primaryColor = Colors.orange.shade800;
-    } else if (widget.initialType == 'story') {
-      appBarTitle = 'વિડિયો સ્ટેટસ / સ્ટોરી ઉમેરો';
-      hintText = 'સ્ટેટસ કેપ્શન લખો (ઓપ્શનલ)...';
-      primaryColor = Colors.green.shade700;
-    }
-
-    final bool isVideoType = widget.initialType != 'post';
-
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(appBarTitle, style: const TextStyle(color: Colors.white, fontSize: 18)),
-        backgroundColor: const Color(0xFF1E3A8A),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Create Post',
+          style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+        ),
         actions: [
-          _isLoading
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitPost,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E3A8A),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                elevation: 0,
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    ),
-                  ),
-                )
-              : TextButton(
-                  onPressed: _uploadContent,
-                  child: const Text('શેર કરો', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
+                    )
+                  : const Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _captionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: hintText,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_selectedMedia != null)
-              Container(
-                height: 220,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.black12,
-                ),
-                child: isVideoType
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.video_collection, size: 50, color: primaryColor),
-                            const SizedBox(height: 8),
-                            Text(
-                              widget.initialType == 'reel'
-                                  ? 'Reel વિડિયો સિલેક્ટ થયેલ છે'
-                                  : 'Status વિડિયો સિલેક્ટ થયેલ છે',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(_selectedMedia!, fit: BoxFit.cover),
-                      ),
-              ),
-            const SizedBox(height: 20),
-            if (widget.initialType == 'post')
-              ElevatedButton.icon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.photo_library),
-                label: const Text('ગેલેરીમાંથી ફોટો પસંદ કરો'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E3A8A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              )
-            else if (widget.initialType == 'reel')
-              ElevatedButton.icon(
-                onPressed: _pickVideo,
-                icon: const Icon(Icons.video_library),
-                label: const Text('ગેલેરીમાંથી Reel / વિડિયો પસંદ કરો'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              )
-            else if (widget.initialType == 'story')
-              ElevatedButton.icon(
-                onPressed: _pickVideo,
-                icon: const Icon(Icons.history_toggle_off),
-                label: const Text('24 કલાક માટે વિડિયો સ્ટેટસ પસંદ કરો'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-          ],
+        child: TextField(
+          controller: _postController,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'તમારા વિચારો અથવા અપડેટ અહીં શેર કરો...',
+            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
+            border: InputBorder.none,
+          ),
         ),
       ),
     );
