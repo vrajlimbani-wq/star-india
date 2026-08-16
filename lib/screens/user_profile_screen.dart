@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../chat_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String targetUid;
@@ -130,36 +131,65 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Follow Button (Hidden if own profile)
+                      // Action Buttons (Follow & Message)
                       if (!isOwnProfile)
-                        StreamBuilder<DocumentSnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(_currentUid)
-                              .collection('following')
-                              .doc(widget.targetUid)
-                              .snapshots(),
-                          builder: (context, followSnap) {
-                            final isFollowing = followSnap.hasData && followSnap.data!.exists;
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(_currentUid)
+                                    .collection('following')
+                                    .doc(widget.targetUid)
+                                    .snapshots(),
+                                builder: (context, followSnap) {
+                                  final isFollowing = followSnap.hasData && followSnap.data!.exists;
 
-                            return SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () => _toggleFollow(isFollowing),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
-                                  foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-                                  elevation: 0,
+                                  return ElevatedButton(
+                                    onPressed: () => _toggleFollow(isFollowing),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
+                                      foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                    child: Text(
+                                      isFollowing ? 'Following' : 'Follow',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatScreen(
+                                        peerUid: widget.targetUid,
+                                        peerName: fullName.isNotEmpty ? fullName : 'Star User',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFF1E3A8A)),
+                                  foregroundColor: const Color(0xFF1E3A8A),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
-                                child: Text(
-                                  isFollowing ? 'Following' : 'Follow',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                child: const Text(
+                                  'Message',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
                     ],
                   ),
