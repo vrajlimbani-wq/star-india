@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'feed_screen.dart';
 import 'reels_screen.dart';
 import 'explore_screen.dart';
@@ -34,10 +36,50 @@ class StarIndiaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
         useMaterial3: true,
       ),
-      home: const LanguageSelectionScreen(),
+      home: const AuthWrapper(),
     );
   }
 }
+
+// ૧. ઓટો-લોગિન ચેક વિજેટ
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
+          );
+        }
+        if (snapshot.hasData && snapshot.data != null) {
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance.collection('users').doc(snapshot.data!.uid).get(),
+            builder: (context, userSnap) {
+              if (userSnap.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
+                );
+              }
+              String name = "Star User";
+              String profileType = "Personal";
+              if (userSnap.hasData && userSnap.data!.exists) {
+                final data = userSnap.data!.data() as Map<String, dynamic>?;
+                name = data?['fullName'] ?? data?['name'] ?? snapshot.data!.displayName ?? "Star User";
+                profileType = data?['profileType'] ?? "Personal";
+              }
+              return MainHomeScreen(userName: name, profileType: profileType);
+            },
+          );
+        }
+        return const LanguageSelectionScreen();
+      },
+    );
+  }
+  }
 
 class MainHomeScreen extends StatefulWidget {
   final String userName;
@@ -45,7 +87,7 @@ class MainHomeScreen extends StatefulWidget {
 
   const MainHomeScreen({
     super.key,
-    this.userName = "Vraj Limbani",
+    this.userName = "Star User",
     this.profileType = "Personal",
   });
 
@@ -55,6 +97,8 @@ class MainHomeScreen extends StatefulWidget {
 
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
+  int _backPressCount = 0;
+  DateTime? _lastBackPressTime;
 
   void _navigateToCreateScreen(String postType) {
     Navigator.push(
@@ -127,7 +171,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     );
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       FeedScreen(onAddPost: _openCreatePostModal),
@@ -137,56 +181,88 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
       ProfileScreen(userName: widget.userName),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
-        elevation: 1,
-        title: const Text(
-          'Star India',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    // ૨. ૩ વાર બેક દબાવવા પર જ એપ બંધ થવાનું લોજિક
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _backPressCount = 1;
+        } else {
+          _backPressCount++;
+        }
+        _lastBackPressTime = now;
+
+        if (_backPressCount == 1) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('એપ બંધ કરવા માટે હજુ ૨ વાર બેક દબાવો'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (_backPressCount == 2) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('એપ બંધ કરવા માટે હજુ ૧ વાર બેક દબાવો'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else if (_backPressCount >= 3) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1E3A8A),
+          elevation: 1,
+          title: const Text(
+            'Star India',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add_box_outlined, color: Colors.white),
+              onPressed: _openCreatePostModal,
+            ),
+            IconButton(
+              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              onPressed: () => setState(() => _currentIndex = 3),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined, color: Colors.white),
-            onPressed: _openCreatePostModal,
-          ),
-          IconButton(
-            icon: const Icon(Icons.send_rounded, color: Colors.white),
-            onPressed: () => setState(() => _currentIndex = 3),
-          ),
-        ],
-      ),
-      body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: Color(0xFF1E3A8A)),
-            label: 'Feed',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.play_circle_outline),
-            selectedIcon: Icon(Icons.play_circle_fill, color: Colors.red),
-            label: 'Reels',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.trending_up),
-            selectedIcon: Icon(Icons.trending_up, color: Color(0xFF1E3A8A)),
-            label: 'Explore',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat, color: Colors.green),
-            label: 'Chats',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: Color(0xFF1E3A8A)),
-            label: 'Profile',
-          ),
-        ],
+        body: screens[_currentIndex],
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) => setState(() => _currentIndex = index),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home, color: Color(0xFF1E3A8A)),
+              label: 'Feed',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.play_circle_outline),
+              selectedIcon: Icon(Icons.play_circle_fill, color: Colors.red),
+              label: 'Reels',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.trending_up),
+              selectedIcon: Icon(Icons.trending_up, color: Color(0xFF1E3A8A)),
+              label: 'Explore',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.chat_outlined),
+              selectedIcon: Icon(Icons.chat, color: Colors.green),
+              label: 'Chats',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: Color(0xFF1E3A8A)),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
