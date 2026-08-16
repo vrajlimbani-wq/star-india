@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/user_profile_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -40,6 +41,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
         'followerAt': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  void _navigateToProfile(String uid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserProfileScreen(targetUid: uid),
+      ),
+    );
   }
 
   @override
@@ -153,6 +163,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   child: ListTile(
+                    onTap: () => _navigateToProfile(targetUid),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: CircleAvatar(
                       radius: 26,
@@ -231,65 +242,69 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   final name = data['fullName'] ?? data['firstName'] ?? 'User';
                   final city = data['city'] ?? 'India';
 
-                  return Container(
-                    width: 140,
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                            style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold, fontSize: 20),
+                  return InkWell(
+                    onTap: () => _navigateToProfile(targetUid),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 140,
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
+                            child: Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                              style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold, fontSize: 20),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        Text(
-                          city,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                        ),
-                        const SizedBox(height: 8),
-                        StreamBuilder<DocumentSnapshot>(
-                          stream: FirebaseFirestore.instance
+                          const SizedBox(height: 8),
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          Text(
+                            city,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                          ),
+                          const SizedBox(height: 8),
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance
                               .collection('users')
                               .doc(_currentUid)
                               .collection('following')
                               .doc(targetUid)
                               .snapshots(),
-                          builder: (context, fSnap) {
-                            final isFollowing = fSnap.hasData && fSnap.data!.exists;
-                            return SizedBox(
-                              height: 28,
-                              child: ElevatedButton(
-                                onPressed: () => _toggleFollow(targetUid, isFollowing),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
-                                  foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            builder: (context, fSnap) {
+                              final isFollowing = fSnap.hasData && fSnap.data!.exists;
+                              return SizedBox(
+                                height: 28,
+                                child: ElevatedButton(
+                                  onPressed: () => _toggleFollow(targetUid, isFollowing),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
+                                    foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  ),
+                                  child: Text(isFollowing ? '✓' : 'Follow', style: const TextStyle(fontSize: 11)),
                                 ),
-                                child: Text(isFollowing ? '✓' : 'Follow', style: const TextStyle(fontSize: 11)),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
