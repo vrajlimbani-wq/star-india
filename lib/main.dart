@@ -7,7 +7,7 @@ import 'explore_screen.dart';
 import 'reels_screen.dart';
 import 'profile_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const StarIndiaApp());
 }
@@ -26,9 +26,16 @@ class StarIndiaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
       ),
       home: FutureBuilder(
-        future: Firebase.initializeApp(),
+        future: Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'AIzaSyAFWVCmLEW-3vmjQys5p4yj3JkjJJho2Cc',
+            appId: '1:219020282945:android:82be9457eb99719125cac0',
+            messagingSenderId: '219020282945',
+            projectId: 'star-india-a377f',
+            storageBucket: 'star-india-a377f.firebasestorage.app',
+          ),
+        ),
         builder: (context, snapshot) {
-          // If Firebase is still initializing
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               backgroundColor: Colors.white,
@@ -38,7 +45,6 @@ class StarIndiaApp extends StatelessWidget {
             );
           }
 
-          // If Firebase failed to initialize
           if (snapshot.hasError) {
             return Scaffold(
               backgroundColor: Colors.white,
@@ -55,7 +61,6 @@ class StarIndiaApp extends StatelessWidget {
             );
           }
 
-          // Once Firebase is initialized, listen to Auth state
           return StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, authSnapshot) {
