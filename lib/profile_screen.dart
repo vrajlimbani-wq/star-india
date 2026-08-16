@@ -1,275 +1,254 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String userName;
-  const ProfileScreen({super.key, this.userName = "Vraj Limbani"});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late String _currentName;
-  String _userBio = "Official Star India Profile";
+class _ProfileScreenState extends State<ProfileScreen> {
+  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _currentName = widget.userName;
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  // Edit Profile Dialog
-  void _showEditProfileDialog() {
-    final nameController = TextEditingController(text: _currentName);
-    final bioController = TextEditingController(text: _userBio);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'નામ (Name)'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: bioController,
-              decoration: const InputDecoration(labelText: 'બાયો (Bio)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _currentName = nameController.text.trim().isNotEmpty ? nameController.text.trim() : _currentName;
-                _userBio = bioController.text.trim().isNotEmpty ? bioController.text.trim() : _userBio;
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('પ્રોફાઇલ સફળતાપૂર્વક અપડેટ થઈ!')),
-              );
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Share Profile Sheet
-  void _shareProfile() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Share Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.copy, color: Color(0xFF1E3A8A)),
-              title: const Text('પ્રોફાઇલ લિંક કોપી કરો'),
-              subtitle: Text('starindia.app/user/${_currentName.replaceAll(" ", "").toLowerCase()}'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('પ્રોફાઇલ લિંક કોપી થઈ ગઈ!')),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentUid.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('યુઝર લૉગિન નથી.')),
+      );
+    }
+
     return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Color(0xFF1E3A8A),
-                          child: Icon(Icons.person, size: 50, color: Colors.white),
-                        ),
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStat('12', 'Posts'),
-                              _buildStat('1.5K', 'Followers'),
-                              _buildStat('320', 'Following'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _currentName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _userBio,
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _showEditProfileDialog,
-                            child: const Text('Edit Profile'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _shareProfile,
-                            child: const Text('Share Profile'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.logout, color: Colors.red),
-                      title: const Text('લોગઆઉટ કરો', style: TextStyle(color: Colors.red)),
-                      onTap: () async {
-                        await FirebaseAuth.instance.signOut();
-                        if (context.mounted) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AuthScreen()),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPersistentHeader(
-              delegate: _SliverAppBarDelegate(
-                TabBar(
-                  controller: _tabController,
-                  indicatorColor: const Color(0xFF1E3A8A),
-                  labelColor: const Color(0xFF1E3A8A),
-                  unselectedLabelColor: Colors.grey,
-                  tabs: const [
-                    Tab(icon: Icon(Icons.grid_on)),
-                    Tab(icon: Icon(Icons.video_library_outlined)),
-                  ],
-                ),
-              ),
-              pinned: true,
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            GridView.builder(
-              padding: const EdgeInsets.all(2),
-              itemCount: 12,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-              ),
-              itemBuilder: (context, index) {
-                return Container(
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image, color: Colors.grey),
-                );
-              },
-            ),
-            GridView.builder(
-              padding: const EdgeInsets.all(2),
-              itemCount: 6,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                childAspectRatio: 9 / 16,
-              ),
-              itemBuilder: (context, index) {
-                return Container(
-                  color: Colors.grey[400],
-                  child: const Icon(Icons.play_circle_outline, color: Colors.white, size: 30),
-                );
-              },
-            ),
-          ],
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: const Text(
+          'My Profile',
+          style: TextStyle(
+            color: Color(0xFF1E3A8A),
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('લૉગઆઉટ'),
+                  content: const Text('શું તમે ખરેખર લૉગઆઉટ કરવા માંગો છો?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('ના'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _signOut();
+                      },
+                      child: const Text('હા', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').doc(_currentUid).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+          }
+
+          final data = snapshot.hasData && snapshot.data!.exists
+              ? snapshot.data!.data() as Map<String, dynamic>
+              : <String, dynamic>{};
+
+          final fullName = data['fullName'] ??
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+          final profession = data['designation'] ?? data['professionType'] ?? 'Star India User';
+          final city = data['city'] ?? '';
+          final bio = data['bio'] ?? '';
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // Profile Header Card
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 45,
+                        backgroundColor: const Color(0xFF1E3A8A),
+                        child: Text(
+                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                          style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        fullName.isNotEmpty ? fullName : 'My Account',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        profession,
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                      ),
+                      if (city.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(city, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      ],
+                      if (bio.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          bio,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+
+                      // Followers / Following Stats
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStatCounter('followers', 'Followers'),
+                          Container(height: 25, width: 1, color: Colors.grey.shade300),
+                          _buildStatCounter('following', 'Following'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // My Posts Title
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.grid_on, size: 18, color: Color(0xFF1E3A8A)),
+                      SizedBox(width: 8),
+                      Text(
+                        'My Posts',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildMyPosts(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStat(String count, String label) {
-    return Column(
-      children: [
-        Text(count, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
-  }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
-
-  final TabBar _tabBar;
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: _tabBar,
+  Widget _buildStatCounter(String subCollection, String label) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUid)
+          .collection(subCollection)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+        return Column(
+          children: [
+            Text(
+              '$count',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+            ),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ],
+        );
+      },
     );
   }
 
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
+  Widget _buildMyPosts() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('posts')
+          .where('authorUid', isEqualTo: _currentUid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(30),
+            child: Center(
+              child: Text(
+                'તમે હજુ કોઈ પોસ્ટ મૂકી નથી.',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          );
+        }
+
+        final posts = snapshot.data!.docs;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final postData = posts[index].data() as Map<String, dynamic>;
+            final content = postData['content'] ?? '';
+            final likesCount = (postData['likes'] as List?)?.length ?? 0;
+
+            return Card(
+              elevation: 0.5,
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(content, style: const TextStyle(fontSize: 14, height: 1.4)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite, size: 16, color: Colors.redAccent),
+                        const SizedBox(width: 4),
+                        Text('$likesCount likes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }
