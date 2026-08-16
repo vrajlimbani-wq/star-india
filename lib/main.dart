@@ -5,6 +5,7 @@ import 'reels_screen.dart';
 import 'explore_screen.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
+import 'create_post_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,13 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
 
+  void _navigateToCreatePost() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+    );
+  }
+
   void _openCreatePostModal() {
     showModalBottomSheet(
       context: context,
@@ -70,19 +78,28 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 const Text('નવી પોસ્ટ / કન્ટેન્ટ ઉમેરો', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
                 const SizedBox(height: 16),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.post_add, color: Colors.white)),
-                  title: const Text('Create Post / Tweet (X & FB)'),
-                  onTap: () => Navigator.pop(context),
+                  leading: const CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.post_add, color: Colors.white)),
+                  title: const Text('Create Post / Update'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToCreatePost();
+                  },
                 ),
                 ListTile(
-                  leading: const CircleAvatar(backgroundColor: Colors.red, child: Icon(Icons.video_call, color: Colors.white)),
-                  title: const Text('Upload Reel / Video (TikTok & Insta)'),
-                  onTap: () => Navigator.pop(context),
+                  leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.video_call, color: Colors.white)),
+                  title: const Text('Upload Reel / Short Video'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToCreatePost();
+                  },
                 ),
                 ListTile(
                   leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.history_toggle_off, color: Colors.white)),
-                  title: const Text('Add Status / Story (WhatsApp)'),
-                  onTap: () => Navigator.pop(context),
+                  title: const Text('Add Story / Status'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _navigateToCreatePost();
+                  },
                 ),
               ],
             ),
