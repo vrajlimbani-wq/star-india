@@ -43,10 +43,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final chatRoomRef = FirebaseFirestore.instance.collection('chat_rooms').doc(_chatRoomId);
 
-    // Add message to subcollection
     await chatRoomRef.collection('messages').add(messageData);
 
-    // Update last message in chat room
     await chatRoomRef.set({
       'users': [_currentUid, widget.peerUid],
       'lastMessage': text,
@@ -133,7 +131,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             bottomLeft: isMe ? const Radius.circular(14) : const Radius.circular(0),
                             bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(14),
                           ),
-                          border: isMe ? null : Border.side(color: Colors.grey.shade200),
+                          border: isMe ? null : Border.all(color: Colors.grey.shade200),
                         ),
                         child: Text(
                           msg['text'] ?? '',
