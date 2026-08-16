@@ -145,48 +145,60 @@ class _ExploreScreenState extends State<ExploreScreen> {
             final city = userData['city'] ?? '';
             final profession = userData['designation'] ?? userData['professionType'] ?? 'Star India User';
 
-            return Card(
-              elevation: 1,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              child: ListTile(
-                onTap: () => _navigateToProfile(targetUid),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: CircleAvatar(
-                  radius: 26,
-                  backgroundColor: const Color(0xFF1E3A8A),
-                  child: Text(
-                    fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            return StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(_currentUid)
+                  .collection('following')
+                  .doc(targetUid)
+                  .snapshots(),
+              builder: (context, followSnap) {
+                final isFollowing = followSnap.hasData && followSnap.data!.exists;
+
+                return Card(
+                  elevation: 1,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  child: ListTile(
+                    onTap: () => _navigateToProfile(targetUid),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: const Color(0xFF1E3A8A),
+                      child: Text(
+                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                    ),
+                    title: Text(
+                      fullName.isNotEmpty ? fullName : 'Star User',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(profession, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                        if (city.isNotEmpty)
+                          Text('📍 $city', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                      ],
+                    ),
+                    trailing: ElevatedButton(
+                      onPressed: () => _toggleFollow(targetUid, isFollowing),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
+                        foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: Text(
+                        isFollowing ? 'Following' : 'Follow',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
                   ),
-                ),
-                title: Text(
-                  fullName.isNotEmpty ? fullName : 'Star User',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(profession, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                    if (city.isNotEmpty)
-                      Text('📍 $city', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                  ],
-                ),
-                trailing: ElevatedButton(
-                  onPressed: () => _toggleFollow(targetUid, isFollowing: false),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E3A8A),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  ),
-                  child: const Text(
-                    'Follow',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
-              ),
+                );
+              },
             );
           },
         );
