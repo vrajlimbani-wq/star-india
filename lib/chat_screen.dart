@@ -32,12 +32,19 @@ class _ChatsScreenState extends State<ChatsScreen> {
     },
   ];
 
-  // Pull to refresh ફંક્શન
   Future<void> _handleRefresh() async {
     await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      // અહીં ચેટ લિસ્ટ રીફ્રેશ થશે
-    });
+    setState(() {});
+  }
+
+  // Active Chat Screen ખોલવા માટે
+  void _openChatRoom(String chatName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatRoomScreen(title: chatName),
+      ),
+    );
   }
 
   @override
@@ -116,19 +123,94 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     ),
                 ],
               ),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${c['name']} સાથે ચેટ શરૂ કરો')),
-                );
-              },
+              onTap: () => _openChatRoom(c['name']),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => _openChatRoom("New Chat"),
         backgroundColor: const Color(0xFF1E3A8A),
         child: const Icon(Icons.chat, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// ચેટિંગ રૂમ વ્યુ
+class ChatRoomScreen extends StatefulWidget {
+  final String title;
+  const ChatRoomScreen({super.key, required this.title});
+
+  @override
+  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
+}
+
+class _ChatRoomScreenState extends State<ChatRoomScreen> {
+  final TextEditingController _msgController = TextEditingController();
+  final List<String> _messages = ["નમસ્તે, Star India માં આપનું સ્વાગત છે!"];
+
+  void _sendMessage() {
+    if (_msgController.text.trim().isNotEmpty) {
+      setState(() {
+        _messages.add(_msgController.text.trim());
+        _msgController.clear();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1E3A8A),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                return Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E3A8A),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Text(_messages[index], style: const TextStyle(color: Colors.white)),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _msgController,
+                    decoration: InputDecoration(
+                      hintText: 'મેસેજ લખો...',
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Color(0xFF1E3A8A)),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
