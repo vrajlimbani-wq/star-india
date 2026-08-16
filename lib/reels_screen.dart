@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:video_player/video_player.dart';
 import 'screens/user_profile_screen.dart';
 
 class ReelsScreen extends StatefulWidget {
@@ -28,6 +29,16 @@ class _ReelsScreenState extends State<ReelsScreen> {
         'likes': FieldValue.arrayUnion([_currentUid]),
       });
     }
+  }
+
+  void _shareReel(String caption) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Star India રીલ લિંક કોપી થઈ ગઈ છે!'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Color(0xFF1E3A8A),
+      ),
+    );
   }
 
   @override
@@ -71,6 +82,7 @@ class _ReelsScreenState extends State<ReelsScreen> {
               final reel = reels[index];
               final data = reel.data() as Map<String, dynamic>;
               final reelId = reel.id;
+              final videoUrl = data['videoUrl'] ?? '';
               final authorUid = data['authorUid'] ?? '';
               final authorName = data['authorName'] ?? 'Star Creator';
               final caption = data['caption'] ?? '';
@@ -80,31 +92,34 @@ class _ReelsScreenState extends State<ReelsScreen> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Placeholder for Video Background
-                  Container(
-                    color: Colors.black,
-                    child: Center(
-                      child: Icon(
-                        Icons.play_circle_outline,
-                        size: 80,
-                        color: Colors.white.withOpacity(0.3),
+                  // Video Player Widget
+                  if (videoUrl.isNotEmpty)
+                    ReelVideoPlayerItem(videoUrl: videoUrl)
+                  else
+                    Container(
+                      color: Colors.black,
+                      child: Center(
+                        child: Icon(
+                          Icons.play_circle_outline,
+                          size: 80,
+                          color: Colors.white.withOpacity(0.3),
+                        ),
                       ),
                     ),
-                  ),
 
                   // Bottom Gradient Overlay
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: 200,
+                    height: 220,
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withOpacity(0.85),
                             Colors.transparent,
                           ],
                         ),
@@ -187,7 +202,7 @@ class _ReelsScreenState extends State<ReelsScreen> {
                         const SizedBox(height: 16),
                         IconButton(
                           icon: const Icon(Icons.share, color: Colors.white, size: 28),
-                          onPressed: () {},
+                          onPressed: () => _shareReel(caption),
                         ),
                         const Text(
                           'Share',
@@ -201,6 +216,61 @@ class _ReelsScreenState extends State<ReelsScreen> {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class ReelVideoPlayerItem extends StatefulWidget {
+  final String videoUrl;
+  const ReelVideoPlayerItem({super.key, required this.videoUrl});
+
+  @override
+  State<ReelVideoPlayerItem> createState() => _ReelVideoPlayerItemState();
+}
+
+class _ReelVideoPlayerItemState extends State<ReelVideoPlayerItem> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        setState(() {
+          _isInitialized = true;
+        });
+        _controller.setLooping(true);
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _controller.value.isPlaying ? _controller.pause() : _controller.play();
+        });
+      },
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: VideoPlayer(_controller),
+        ),
       ),
     );
   }
