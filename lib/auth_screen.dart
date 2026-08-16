@@ -12,11 +12,9 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  // Authentication Fields
-  final _loginIdentifierController = TextEditingController(); // Email or Phone
+  final _loginIdentifierController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Signup Profile Details
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -28,7 +26,6 @@ class _AuthScreenState extends State<AuthScreen> {
   final _designationController = TextEditingController();
   final _companyOrGovtController = TextEditingController();
 
-  // Social Links
   final _whatsappLinkController = TextEditingController();
   final _instagramLinkController = TextEditingController();
   final _facebookLinkController = TextEditingController();
@@ -237,7 +234,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_isLogin) ...[
-                      // Login Fields
                       TextField(
                         controller: _loginIdentifierController,
                         decoration: const InputDecoration(
@@ -257,7 +253,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     ] else ...[
-                      // Signup - Section 1: Basic Info
                       const Text('વ્યક્તિગત વિગતો (Personal Details)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       Row(
@@ -308,9 +303,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         controller: _hobbiesController,
                         decoration: const InputDecoration(labelText: 'તમારા શોખ / શું પસંદ છે તે', prefixIcon: Icon(Icons.favorite_border), border: OutlineInputBorder()),
                       ),
-
                       const SizedBox(height: 24),
-                      // Signup - Section 2: Education & Profession
                       const Text('શિક્ષણ અને વ્યવસાય (Education & Work)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
@@ -336,9 +329,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         controller: _designationController,
                         decoration: const InputDecoration(labelText: 'ક્યાં સ્થાને / પદ પર છો (Designation)', border: OutlineInputBorder()),
                       ),
-
                       const SizedBox(height: 24),
-                      // Signup - Section 3: Contact & Security
                       const Text('સંપર્ક અને સુરક્ષા (Contact & Login)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       TextField(
@@ -364,9 +355,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         obscureText: true,
                         decoration: const InputDecoration(labelText: 'પાસવર્ડ બનાવો (ઓછામાં ઓછા 6 આંકડા) *', prefixIcon: Icon(Icons.lock_outline), border: OutlineInputBorder()),
                       ),
-
                       const SizedBox(height: 24),
-                      // Signup - Section 4: Social Links
                       const Text('સોશિયલ મીડિયા લિંક્સ (Social Profiles)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
                       const SizedBox(height: 12),
                       TextField(
@@ -389,7 +378,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         decoration: const InputDecoration(labelText: 'Twitter (X) પ્રોફાઇલ લિંક', prefixIcon: Icon(Icons.alternate_email), border: OutlineInputBorder()),
                       ),
                     ],
-
                     const SizedBox(height: 28),
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
