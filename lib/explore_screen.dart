@@ -21,20 +21,31 @@ class ExploreScreen extends StatelessWidget {
             prefixIcon: const Icon(Icons.search),
             filled: true,
             fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
         const SizedBox(height: 20),
-        const Text('Trends for you (X / Twitter)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text(
+          'Trends for you',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
         ...trends.map((t) => ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(t['tag']!, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-          subtitle: Text('${t['category']} • ${t['posts']}'),
-          trailing: const Icon(Icons.more_vert),
-        )),
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                t['tag']!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E3A8A),
+                ),
+              ),
+              subtitle: Text('${t['category']} • ${t['posts']}'),
+              trailing: const Icon(Icons.more_vert),
+            )),
       ],
     );
   }
 }
-
