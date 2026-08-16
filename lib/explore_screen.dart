@@ -29,11 +29,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final targetRef = FirebaseFirestore.instance.collection('users').doc(targetUid);
 
     if (isFollowing) {
-      // Unfollow
       await currentRef.collection('following').doc(targetUid).delete();
       await targetRef.collection('followers').doc(_currentUid).delete();
     } else {
-      // Follow
       await currentRef.collection('following').doc(targetUid).set({
         'followedAt': FieldValue.serverTimestamp(),
       });
@@ -111,7 +109,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  // સર્ચ રિઝલ્ટ (અન્ય યુઝર્સનું લિસ્ટ)
   Widget _buildSearchResults() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('users').snapshots(),
@@ -148,60 +145,48 @@ class _ExploreScreenState extends State<ExploreScreen> {
             final city = userData['city'] ?? '';
             final profession = userData['designation'] ?? userData['professionType'] ?? 'Star India User';
 
-            return StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(_currentUid)
-                  .collection('following')
-                  .doc(targetUid)
-                  .snapshots(),
-              builder: (context, followSnap) {
-                final isFollowing = followSnap.hasData && followSnap.data!.exists;
-
-                return Card(
-                  elevation: 1,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  child: ListTile(
-                    onTap: () => _navigateToProfile(targetUid),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: CircleAvatar(
-                      radius: 26,
-                      backgroundColor: const Color(0xFF1E3A8A),
-                      child: Text(
-                        fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                    ),
-                    title: Text(
-                      fullName.isNotEmpty ? fullName : 'Star User',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(profession, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                        if (city.isNotEmpty)
-                          Text('📍 $city', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                      ],
-                    ),
-                    trailing: ElevatedButton(
-                      onPressed: () => _toggleFollow(targetUid, isFollowing),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
-                        foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      ),
-                      child: Text(
-                        isFollowing ? 'Following' : 'Follow',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
+            return Card(
+              elevation: 1,
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: ListTile(
+                onTap: () => _navigateToProfile(targetUid),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xFF1E3A8A),
+                  child: Text(
+                    fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                );
-              },
+                ),
+                title: Text(
+                  fullName.isNotEmpty ? fullName : 'Star User',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profession, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                    if (city.isNotEmpty)
+                      Text('📍 $city', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  ],
+                ),
+                trailing: ElevatedButton(
+                  onPressed: () => _toggleFollow(targetUid, isFollowing: false),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E3A8A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: const Text(
+                    'Follow',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
             );
           },
         );
@@ -209,7 +194,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  // ડિફોલ્ટ એક્સપ્લોર પેજ
   Widget _buildExploreContent() {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -252,7 +236,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: BorderSide(color: Colors.grey.shade200),
+                        border: Border.all(color: Colors.grey.shade200),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -277,31 +261,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                          ),
-                          const SizedBox(height: 8),
-                          StreamBuilder<DocumentSnapshot>(
-                            stream: FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(_currentUid)
-                              .collection('following')
-                              .doc(targetUid)
-                              .snapshots(),
-                            builder: (context, fSnap) {
-                              final isFollowing = fSnap.hasData && fSnap.data!.exists;
-                              return SizedBox(
-                                height: 28,
-                                child: ElevatedButton(
-                                  onPressed: () => _toggleFollow(targetUid, isFollowing),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
-                                    foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                                  ),
-                                  child: Text(isFollowing ? '✓' : 'Follow', style: const TextStyle(fontSize: 11)),
-                                ),
-                              );
-                            },
                           ),
                         ],
                       ),
