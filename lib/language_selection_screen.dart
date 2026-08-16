@@ -8,48 +8,97 @@ class LanguageSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, String>> languages = [
       {'code': 'en', 'name': 'English', 'native': 'English'},
-      {'code': 'gu', 'name': 'Gujarati', 'native': 'ગુજરાતી'},
       {'code': 'hi', 'name': 'Hindi', 'native': 'हिन्दी'},
+      {'code': 'gu', 'name': 'Gujarati', 'native': 'ગુજરાતી'},
+      {'code': 'mr', 'name': 'Marathi', 'native': 'मराठी'},
+      {'code': 'ta', 'name': 'Tamil', 'native': 'தமிழ்'},
+      {'code': 'te', 'name': 'Telugu', 'native': 'తెలుగు'},
+      {'code': 'bn', 'name': 'Bengali', 'native': 'বাংলা'},
+      {'code': 'kn', 'name': 'Kannada', 'native': 'ಕನ್ನಡ'},
+      {'code': 'ml', 'name': 'Malayalam', 'native': 'മലയാളം'},
+      {'code': 'pa', 'name': 'Punjabi', 'native': 'ਪੰਜਾਬੀ'},
+      {'code': 'or', 'name': 'Odia', 'native': 'ଓଡ଼ିଆ'},
+      {'code': 'as', 'name': 'Assamese', 'native': 'অসমীয়া'},
+      {'code': 'ur', 'name': 'Urdu', 'native': 'اردو'},
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Choose Language / ભાષા પસંદ કરો'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Welcome to Star India',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1E3A8A),
         centerTitle: true,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 10),
-            const Text(
-              'Select your preferred language\nતમારી પસંદગીની ભાષા પસંદ કરો',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E3A8A),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.language, size: 48, color: Colors.white),
+                  SizedBox(height: 12),
+                  Text(
+                    'Choose Your Language',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'તમારી પસંદગીની ભાષા પસંદ કરો',
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 itemCount: languages.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final lang = languages[index];
                   return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      leading: const Icon(Icons.language, color: Colors.indigo),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
+                        child: Text(
+                          lang['code']!.toUpperCase(),
+                          style: const TextStyle(
+                            color: Color(0xFF1E3A8A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                       title: Text(
                         lang['native']!,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(lang['name']!),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.indigo),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF1E3A8A)),
                       onTap: () {
                         Navigator.pushReplacement(
                           context,
@@ -69,4 +118,3 @@ class LanguageSelectionScreen extends StatelessWidget {
     );
   }
 }
-
