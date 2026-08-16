@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  final String initialType; // 'post', 'reel', અથવા 'story'
+  final String initialType;
 
   const CreatePostScreen({super.key, this.initialType = 'post'});
 
@@ -20,7 +20,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
 
-  // ફોટો સિલેક્ટ કરવા માટે (માત્ર પોસ્ટ માટે)
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (pickedFile != null) {
@@ -30,7 +29,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // વીડિયો સિલેક્ટ કરવા માટે (રીલ અને સ્ટોરી માટે)
   Future<void> _pickVideo() async {
     final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -40,7 +38,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // ફાયરબેઝમાં અપલોડ કરવા માટે
   Future<void> _uploadContent() async {
     if (_selectedMedia == null && _captionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,7 +61,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ? 'stories'
               : 'posts';
 
-      // 1. Firebase Storage માં મીડિયા અપલોડ
       if (_selectedMedia != null) {
         final ref = FirebaseStorage.instance
             .ref()
@@ -75,7 +71,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         mediaUrl = await ref.getDownloadURL();
       }
 
-      // 2. Cloud Firestore માં ડેટા સેવ કરવો
       await FirebaseFirestore.instance.collection(collectionName).add({
         'userId': user?.uid ?? 'guest',
         'userName': user?.displayName ?? 'Vraj Limbani',
@@ -122,7 +117,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // સ્ક્રીન મુજબ ટાઇટલ અને હિન્ટ સેટ કરવું
     String appBarTitle = 'નવી પોસ્ટ બનાવો';
     String hintText = 'તમારા વિચારો અથવા કેપ્શન અહીં લખો...';
     Color primaryColor = const Color(0xFF1E3A8A);
@@ -206,8 +200,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       ),
               ),
             const SizedBox(height: 20),
-
-            // ઓપ્શન મુજબ માત્ર જરૂરી બટન જ દેખાશે
             if (widget.initialType == 'post')
               ElevatedButton.icon(
                 onPressed: _pickImage,
