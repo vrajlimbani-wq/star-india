@@ -3,8 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_screen.dart';
 import 'feed_screen.dart';
-import 'explore_screen.dart';
 import 'reels_screen.dart';
+import 'explore_screen.dart';
+import 'chat_screen.dart';
 import 'profile_screen.dart';
 
 void main() async {
@@ -22,7 +23,7 @@ class StarIndiaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF1E3A8A),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
       ),
       home: FutureBuilder(
@@ -96,8 +97,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = [
     const FeedScreen(),
-    const ExploreScreen(),
     const ReelsScreen(),
+    const ExploreScreen(),
+    const ChatScreen(peerUid: '', peerName: 'Star Chats'),
     const ProfileScreen(),
   ];
 
@@ -120,23 +122,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         unselectedItemColor: Colors.grey.shade500,
         backgroundColor: Colors.white,
         elevation: 8,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Feed',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            activeIcon: Icon(Icons.explore),
+            icon: Icon(Icons.play_circle_outline),
+            activeIcon: Icon(Icons.play_circle_fill),
+            label: 'Reels',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up),
+            activeIcon: Icon(Icons.trending_up),
             label: 'Explore',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.video_library_outlined),
-            activeIcon: Icon(Icons.video_library),
-            label: 'Reels',
+            icon: Icon(Icons.chat_outlined),
+            activeIcon: Icon(Icons.chat),
+            label: 'Chats',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
