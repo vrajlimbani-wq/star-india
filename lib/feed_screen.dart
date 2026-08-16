@@ -14,6 +14,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String _currentUserName = FirebaseAuth.instance.currentUser?.displayName ?? 'Star User';
 
   final List<Map<String, dynamic>> _stories = [
     {'title': 'Your Story', 'icon': Icons.person, 'isUser': true, 'color': Colors.grey},
@@ -43,6 +44,168 @@ class _FeedScreenState extends State<FeedScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+    );
+  }
+
+  void _showShareDialog(String content) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Star India પોસ્ટ લિંક કોપી થઈ ગઈ છે!'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Color(0xFF1E3A8A),
+      ),
+    );
+  }
+
+  void _openCommentBottomSheet(String postId) {
+    final TextEditingController commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SizedBox(
+            height: 420,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'કમેન્ટ્સ (Comments)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Divider(),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('posts')
+                        .doc(postId)
+                        .collection('comments')
+                        .orderBy('createdAt', descending: false)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text('હજુ સુધી કોઈ કમેન્ટ નથી. પ્રથમ કમેન્ટ કરો!', style: TextStyle(color: Colors.grey)),
+                        );
+                      }
+
+                      final comments = snapshot.data!.docs;
+
+                      return ListView.builder(
+                        itemCount: comments.length,
+                        itemBuilder: (context, index) {
+                          final cData = comments[index].data() as Map<String, dynamic>;
+                          final uName = cData['userName'] ?? 'User';
+                          final text = cData['comment'] ?? '';
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: const Color(0xFF1E3A8A),
+                                  child: Text(uName[0].toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(uName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                                        const SizedBox(height: 2),
+                                        Text(text, style: const TextStyle(fontSize: 13)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: commentController,
+                          decoration: InputDecoration(
+                            hintText: 'કમેન્ટ લખો...',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.send_rounded, color: Color(0xFF1E3A8A)),
+                        onPressed: () async {
+                          final text = commentController.text.trim();
+                          if (text.isNotEmpty && _currentUid.isNotEmpty) {
+                            commentController.clear();
+                            await FirebaseFirestore.instance
+                                .collection('posts')
+                                .doc(postId)
+                                .collection('comments')
+                                .add({
+                              'userId': _currentUid,
+                              'userName': _currentUserName,
+                              'comment': text,
+                              'createdAt': FieldValue.serverTimestamp(),
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -196,66 +359,7 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
             const SizedBox(height: 10),
 
-            // 3. Official Welcome Banner Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Text('#', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('Star India Official', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              Text('@starindia', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'ઓલ-ઇન-વન સોશિયલ મીડિયા હબ હવે તૈયાર છે! 🚀\n#StarIndia #NextGenApp',
-                        style: TextStyle(fontSize: 13.5, height: 1.4),
-                      ),
-                      const SizedBox(height: 12),
-                      Divider(height: 1, color: Colors.grey.shade100),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildPostAction(Icons.chat_bubble_outline, '240'),
-                          _buildPostAction(Icons.repeat, 'Repost'),
-                          _buildPostAction(Icons.favorite_border, '1.5K'),
-                          _buildPostAction(Icons.share_outlined, ''),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // 4. Live Firestore Posts Feed
+            // 3. Live Firestore Posts Feed
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('posts')
@@ -272,7 +376,15 @@ class _FeedScreenState extends State<FeedScreen> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const SizedBox.shrink();
+                  return const Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: Center(
+                      child: Text(
+                        'હજુ કોઈ નવી પોસ્ટ નથી. પ્રથમ પોસ્ટ તમે શેર કરો!',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  );
                 }
 
                 final posts = snapshot.data!.docs;
@@ -354,58 +466,4 @@ class _FeedScreenState extends State<FeedScreen> {
                               content,
                               style: const TextStyle(fontSize: 14, height: 1.4),
                             ),
-                            const SizedBox(height: 12),
-                            Divider(height: 1, color: Colors.grey.shade100),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildPostAction(Icons.chat_bubble_outline, '0'),
-                                _buildPostAction(Icons.repeat, 'Repost'),
-                                InkWell(
-                                  onTap: () => _toggleLike(postId, likes),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        isLiked ? Icons.favorite : Icons.favorite_border,
-                                        color: isLiked ? Colors.red : Colors.grey.shade600,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${likes.length}',
-                                        style: TextStyle(color: Colors.grey.shade700, fontSize: 12.5),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                _buildPostAction(Icons.share_outlined, ''),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostAction(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
-        if (label.isNotEmpty) ...[
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 12.5)),
-        ],
-      ],
-    );
-  }
-}
+ 
