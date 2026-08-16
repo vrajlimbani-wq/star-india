@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/user_profile_screen.dart';
+import 'create_post_screen.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -46,6 +47,16 @@ class _FeedScreenState extends State<FeedScreen> {
         ),
         centerTitle: false,
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF1E3A8A),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+          );
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('posts')
@@ -61,7 +72,7 @@ class _FeedScreenState extends State<FeedScreen> {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(
               child: Text(
-                'હજુ કોઈ પોસ્ટ નથી.\nનવી પોસ્ટ ઉમેરવા માટે + બટન દબાવો.',
+                'હજુ કોઈ પોસ્ટ નથી.\nનવી પોસ્ટ ઉમેરવા માટે નીચે + બટન દબાવો.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey, fontSize: 15),
               ),
