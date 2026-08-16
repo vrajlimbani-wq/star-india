@@ -32,385 +32,381 @@ class _AuthScreenState extends State<AuthScreen> {
   final _twitterLinkController = TextEditingController();
 
   DateTime? _selectedBirthDate;
-  String _selectedEducation = "પ્રાથમિક શિક્ષણ";
-  String _selectedProfessionType = "ધંધો / બિઝનેસ";
+  String _selectedEducation = "primary";
+  String _selectedProfessionType = "business";
   String _selectedProfile = "Personal";
 
   bool _isLogin = false;
   bool _isLoading = false;
 
-  final List<String> _educationList = [
-    "પ્રાથમિક શિક્ષણ",
-    "માધ્યમિક શિક્ષણ",
-    "ઉચ્ચતર માધ્યમિક શિક્ષણ",
-    "કોલેજ",
-    "ઉચ્ચતર કોલેજ",
-    "ડિગ્રી / પ્રોફેશનલ",
-  ];
-
-  final List<String> _professionTypes = [
-    "ધંધો / બિઝનેસ",
-    "ખાનગી નોકરી (Private Job)",
-    "સરકારી નોકરી (Govt Job)",
-    "પ્રોફેશનલ / ફ્રીલાન્સર",
-    "વિદ્યાર્થી (Student)",
-  ];
-
-  Future<void> _selectBirthDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000, 1, 1),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedBirthDate) {
-      setState(() {
-        _selectedBirthDate = picked;
-      });
-    }
-  }
-
-  Future<void> _submitAuth() async {
-    final password = _passwordController.text.trim();
-
-    if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('પાસવર્ડ ઓછામાં ઓછો 6 આંકડા/અક્ષરનો હોવો જોઈએ.')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      if (_isLogin) {
-        final identifier = _loginIdentifierController.text.trim();
-        if (identifier.isEmpty) {
-          throw Exception('કૃપા કરીને ઈમેલ અથવા મોબાઈલ નંબર દાખલ કરો.');
-        }
-
-        String authEmail = identifier;
-        if (!identifier.contains('@')) {
-          authEmail = '$identifier@starindia.app';
-        }
-
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: authEmail,
-          password: password,
-        );
-      } else {
-        final firstName = _firstNameController.text.trim();
-        final lastName = _lastNameController.text.trim();
-        final email = _emailController.text.trim();
-        final phone = _primaryPhoneController.text.trim();
-
-        if (firstName.isEmpty || (email.isEmpty && phone.isEmpty)) {
-          throw Exception('કૃપા કરીને નામ અને ઈમેલ અથવા 10 આંકડાનો મોબાઈલ નંબર ભરો.');
-        }
-
-        if (phone.isNotEmpty && phone.length != 10) {
-          throw Exception('કૃપા કરીને માન્ય 10 આંકડાનો મોબાઈલ નંબર દાખલ કરો.');
-        }
-
-        String authEmail = email.isNotEmpty ? email : '$phone@starindia.app';
-
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: authEmail,
-          password: password,
-        );
-
-        final fullName = '$firstName $lastName'.trim();
-
-        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-          'firstName': firstName,
-          'lastName': lastName,
-          'fullName': fullName,
-          'primaryEmail': email,
-          'primaryPhone': phone,
-          'secondaryPhone': _secondaryPhoneController.text.trim(),
-          'birthDate': _selectedBirthDate?.toIso8601String() ?? '',
-          'city': _cityController.text.trim(),
-          'bio': _bioController.text.trim(),
-          'hobbies': _hobbiesController.text.trim(),
-          'education': _selectedEducation,
-          'professionType': _selectedProfessionType,
-          'designation': _designationController.text.trim(),
-          'companyOrGovt': _companyOrGovtController.text.trim(),
-          'socialLinks': {
-            'whatsapp': _whatsappLinkController.text.trim(),
-            'instagram': _instagramLinkController.text.trim(),
-            'facebook': _facebookLinkController.text.trim(),
-            'twitter': _twitterLinkController.text.trim(),
-          },
-          'profileType': _selectedProfile,
-          'language': widget.selectedLanguage,
-          'accountCreatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-
-      if (mounted) {
-        final displayName = _firstNameController.text.trim().isNotEmpty
-            ? '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
-            : 'Star User';
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainHomeScreen(
-              userName: displayName,
-              profileType: _selectedProfile,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(backgroundColor: Colors.red.shade700, content: Text('Error: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _loginIdentifierController.dispose();
-    _passwordController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _primaryPhoneController.dispose();
-    _secondaryPhoneController.dispose();
-    _cityController.dispose();
-    _bioController.dispose();
-    _hobbiesController.dispose();
-    _designationController.dispose();
-    _companyOrGovtController.dispose();
-    _whatsappLinkController.dispose();
-    _instagramLinkController.dispose();
-    _facebookLinkController.dispose();
-    _twitterLinkController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        title: Text(
-          _isLogin ? 'Star India લોગિન' : 'Star India - એકાઉન્ટ બનાવો',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF1E3A8A),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE0E7FF),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.stars_rounded, size: 54, color: Color(0xFF1E3A8A)),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _isLogin ? 'તમારા એકાઉન્ટમાં લોગિન કરો' : 'Star India માં નવી પ્રોફાઇલ બનાવો',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
-            ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_isLogin) ...[
-                      TextField(
-                        controller: _loginIdentifierController,
-                        decoration: const InputDecoration(
-                          labelText: 'ઈમેલ અથવા 10 આંકડાનો મોબાઈલ નંબર',
-                          prefixIcon: Icon(Icons.person_outline),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'પાસવર્ડ (ઓછામાં ઓછા 6 આંકડા)',
-                          prefixIcon: Icon(Icons.lock_outline),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ] else ...[
-                      const Text('વ્યક્તિગત વિગતો (Personal Details)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _firstNameController,
-                              decoration: const InputDecoration(labelText: 'ફર્સ્ટ નેમ *', border: OutlineInputBorder()),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _lastNameController,
-                              decoration: const InputDecoration(labelText: 'લાસ્ટ નેમ', border: OutlineInputBorder()),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      ListTile(
-                        shape: RoundedRectangleBorder(
-                          side: BorderSide(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        leading: const Icon(Icons.calendar_month, color: Color(0xFF1E3A8A)),
-                        title: Text(
-                          _selectedBirthDate == null
-                              ? 'જન્મ તારીખ પસંદ કરો (Birth Date)'
-                              : 'બર્થ ડેટ: ${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}',
-                        ),
-                        trailing: const Icon(Icons.arrow_drop_down),
-                        onTap: () => _selectBirthDate(context),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _cityController,
-                        decoration: const InputDecoration(labelText: 'શહેર / ગામ', prefixIcon: Icon(Icons.location_city), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _bioController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(labelText: 'બાયો / તમારા વિશે ટૂંકમાં', border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _hobbiesController,
-                        decoration: const InputDecoration(labelText: 'તમારા શોખ / શું પસંદ છે તે', prefixIcon: Icon(Icons.favorite_border), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text('શિક્ષણ અને વ્યવસાય (Education & Work)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _selectedEducation,
-                        decoration: const InputDecoration(labelText: 'અભ્યાસ / શિક્ષણ લેવલ', border: OutlineInputBorder()),
-                        items: _educationList.map((edu) => DropdownMenuItem(value: edu, child: Text(edu))).toList(),
-                        onChanged: (val) => setState(() => _selectedEducation = val!),
-                      ),
-                      const SizedBox(height: 14),
-                      DropdownButtonFormField<String>(
-                        value: _selectedProfessionType,
-                        decoration: const InputDecoration(labelText: 'વ્યવસાયનો પ્રકાર', border: OutlineInputBorder()),
-                        items: _professionTypes.map((prof) => DropdownMenuItem(value: prof, child: Text(prof))).toList(),
-                        onChanged: (val) => setState(() => _selectedProfessionType = val!),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _companyOrGovtController,
-                        decoration: const InputDecoration(labelText: 'કંપનીનું નામ / સરકારી ખાતું / વ્યવસાયનું નામ', border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _designationController,
-                        decoration: const InputDecoration(labelText: 'ક્યાં સ્થાને / પદ પર છો (Designation)', border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text('સંપર્ક અને સુરક્ષા (Contact & Login)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _primaryPhoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(labelText: '૧૦ આંકડાનો મોબાઈલ નંબર *', prefixIcon: Icon(Icons.phone), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _secondaryPhoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(labelText: 'બીજો મોબાઈલ નંબર (ઓપ્શનલ)', prefixIcon: Icon(Icons.phone_android), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(labelText: 'ઈમેલ એડ્રેસ', prefixIcon: Icon(Icons.email_outlined), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(labelText: 'પાસવર્ડ બનાવો (ઓછામાં ઓછા 6 આંકડા) *', prefixIcon: Icon(Icons.lock_outline), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text('સોશિયલ મીડિયા લિંક્સ (Social Profiles)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _whatsappLinkController,
-                        decoration: const InputDecoration(labelText: 'WhatsApp લિંક / નંબર', prefixIcon: Icon(Icons.chat), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _instagramLinkController,
-                        decoration: const InputDecoration(labelText: 'Instagram લિંક / યુઝરનેમ', prefixIcon: Icon(Icons.camera_alt_outlined), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _facebookLinkController,
-                        decoration: const InputDecoration(labelText: 'Facebook પ્રોફાઇલ લિંક', prefixIcon: Icon(Icons.facebook), border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _twitterLinkController,
-                        decoration: const InputDecoration(labelText: 'Twitter (X) પ્રોફાઇલ લિંક', prefixIcon: Icon(Icons.alternate_email), border: OutlineInputBorder()),
-                      ),
-                    ],
-                    const SizedBox(height: 28),
-                    _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E3A8A),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              onPressed: _submitAuth,
-                              child: Text(
-                                _isLogin ? 'લોગિન કરો' : 'એકાઉન્ટ બનાવો અને શરૂ કરો',
-                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => setState(() => _isLogin = !_isLogin),
-              child: Text(
-                _isLogin ? 'નવું એકાઉન્ટ બનાવવું છે? એકાઉન્ટ બનાવો' : 'પહેલેથી એકાઉન્ટ છે? લોગિન કરો',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+  Map<String, Map<String, String>> get _dict => {
+        'en': {
+          'app_title_login': 'Star India - Login',
+          'app_title_signup': 'Star India - Create Account',
+          'header_login': 'Log in to your account',
+          'header_signup': 'Create your profile on Star India',
+          'sec_personal': 'Personal Details',
+          'first_name': 'First Name *',
+          'last_name': 'Last Name',
+          'pick_birthdate': 'Select Birth Date',
+          'birthdate_is': 'Birth Date:',
+          'city': 'City / Town',
+          'bio': 'Bio / Short description about you',
+          'hobbies': 'Hobbies / Interests',
+          'sec_work': 'Education & Profession',
+          'edu_label': 'Education Level',
+          'edu_primary': 'Primary Education',
+          'edu_secondary': 'Secondary Education',
+          'edu_higher_sec': 'Higher Secondary Education',
+          'edu_college': 'College',
+          'edu_higher_college': 'Post Graduate / Higher College',
+          'edu_degree': 'Degree / Professional',
+          'prof_label': 'Profession Type',
+          'prof_business': 'Business / Self-Employed',
+          'prof_private': 'Private Job',
+          'prof_govt': 'Government Job',
+          'prof_freelance': 'Professional / Freelancer',
+          'prof_student': 'Student',
+          'company_name': 'Company / Department / Business Name',
+          'designation': 'Designation / Role',
+          'sec_contact': 'Contact & Security',
+          'phone_label': '10-Digit Mobile Number *',
+          'sec_phone_label': 'Secondary Mobile Number (Optional)',
+          'email_label': 'Email Address',
+          'pwd_label': 'Password (At least 6 characters) *',
+          'login_id_label': 'Email or 10-Digit Mobile Number',
+          'login_pwd_label': 'Password',
+          'sec_social': 'Social Media Profiles',
+          'whatsapp': 'WhatsApp Link / Number',
+          'instagram': 'Instagram Profile / Username',
+          'facebook': 'Facebook Profile Link',
+          'twitter': 'Twitter (X) Profile Link',
+          'btn_login': 'Log In',
+          'btn_signup': 'Create Account & Get Started',
+          'switch_to_signup': 'Need a new account? Sign Up',
+          'switch_to_login': 'Already have an account? Log In',
+          'err_pwd_len': 'Password must be at least 6 characters.',
+          'err_empty_login': 'Please enter Email or Mobile Number.',
+          'err_empty_name': 'Please enter First Name and Mobile or Email.',
+          'err_phone_invalid': 'Please enter a valid 10-digit mobile number.',
+        },
+        'gu': {
+          'app_title_login': 'Star India - લોગિન',
+          'app_title_signup': 'Star India - એકાઉન્ટ બનાવો',
+          'header_login': 'તમારા એકાઉન્ટમાં લોગિન કરો',
+          'header_signup': 'Star India માં નવી પ્રોફાઇલ બનાવો',
+          'sec_personal': 'વ્યક્તિગત વિગતો',
+          'first_name': 'ફર્સ્ટ નેમ *',
+          'last_name': 'લાસ્ટ નેમ',
+          'pick_birthdate': 'જન્મ તારીખ પસંદ કરો',
+          'birthdate_is': 'બર્થ ડેટ:',
+          'city': 'શહેર / ગામ',
+          'bio': 'બાયો / તમારા વિશે ટૂંકમાં',
+          'hobbies': 'તમારા શોખ / શું પસંદ છે તે',
+          'sec_work': 'શિક્ષણ અને વ્યવસાય',
+          'edu_label': 'અભ્યાસ / શિક્ષણ લેવલ',
+          'edu_primary': 'પ્રાથમિક શિક્ષણ',
+          'edu_secondary': 'માધ્યમિક શિક્ષણ',
+          'edu_higher_sec': 'ઉચ્ચતર માધ્યમિક શિક્ષણ',
+          'edu_college': 'કોલેજ',
+          'edu_higher_college': 'ઉચ્ચતર કોલેજ',
+          'edu_degree': 'ડિગ્રી / પ્રોફેશનલ',
+          'prof_label': 'વ્યવસાયનો પ્રકાર',
+          'prof_business': 'ધંધો / બિઝનેસ',
+          'prof_private': 'ખાનગી નોકરી',
+          'prof_govt': 'સરકારી નોકરી',
+          'prof_freelance': 'પ્રોફેશનલ / ફ્રીલાન્સર',
+          'prof_student': 'વિદ્યાર્થી',
+          'company_name': 'કંપનીનું નામ / સરકારી ખાતું / વ્યવસાયનું નામ',
+          'designation': 'ક્યાં સ્થાને / પદ પર છો (Designation)',
+          'sec_contact': 'સંપર્ક અને સુરક્ષા',
+          'phone_label': '૧૦ આંકડાનો મોબાઈલ નંબર *',
+          'sec_phone_label': 'બીજો મોબાઈલ નંબર (ઓપ્શનલ)',
+          'email_label': 'ઈમેલ એડ્રેસ',
+          'pwd_label': 'પાસવર્ડ બનાવો (ઓછામાં ઓછા 6 આંકડા) *',
+          'login_id_label': 'ઈમેલ અથવા 10 આંકડાનો મોબાઈલ નંબર',
+          'login_pwd_label': 'પાસવર્ડ',
+          'sec_social': 'સોશિયલ મીડિયા લિંક્સ',
+          'whatsapp': 'WhatsApp લિંક / નંબર',
+          'instagram': 'Instagram લિંક / યુઝરનેમ',
+          'facebook': 'Facebook પ્રોફાઇલ લિંક',
+          'twitter': 'Twitter (X) પ્રોફાઇલ લિંક',
+          'btn_login': 'લોગિન કરો',
+          'btn_signup': 'એકાઉન્ટ બનાવો અને શરૂ કરો',
+          'switch_to_signup': 'નવું એકાઉન્ટ બનાવવું છે? એકાઉન્ટ બનાવો',
+          'switch_to_login': 'પહેલેથી એકાઉન્ટ છે? લોગિન કરો',
+          'err_pwd_len': 'પાસવર્ડ ઓછામાં ઓછો 6 આંકડાનો હોવો જોઈએ.',
+          'err_empty_login': 'કૃપા કરીને ઈમેલ અથવા મોબાઈલ નંબર દાખલ કરો.',
+          'err_empty_name': 'કૃપા કરીને નામ અને ઈમેલ અથવા 10 આંકડાનો મોબાઈલ નંબર ભરો.',
+          'err_phone_invalid': 'કૃપા કરીને માન્ય 10 આંકડાનો મોબાઈલ નંબર દાખલ કરો.',
+        },
+        'hi': {
+          'app_title_login': 'Star India - लॉगिन',
+          'app_title_signup': 'Star India - खाता बनाएं',
+          'header_login': 'अपने खाते में लॉगिन करें',
+          'header_signup': 'Star India में नई प्रोफ़ाइल बनाएं',
+          'sec_personal': 'व्यक्तिगत विवरण',
+          'first_name': 'पहला नाम *',
+          'last_name': 'अंतिम नाम',
+          'pick_birthdate': 'जन्म तिथि चुनें',
+          'birthdate_is': 'जन्म तिथि:',
+          'city': 'शहर / गाँव',
+          'bio': 'बायो / अपने बारे में संक्षिप्त विवरण',
+          'hobbies': 'शौक / रुचियां',
+          'sec_work': 'शिक्षा और व्यवसाय',
+          'edu_label': 'शिक्षा का स्तर',
+          'edu_primary': 'प्राथमिक शिक्षा',
+          'edu_secondary': 'माध्यमिक शिक्षा',
+          'edu_higher_sec': 'उच्चतर माध्यमिक शिक्षा',
+          'edu_college': 'कॉलेज',
+          'edu_higher_college': 'स्नातकोत्तर / उच्च कॉलेज',
+          'edu_degree': 'डिग्री / पेशेवर',
+          'prof_label': 'व्यवसाय का प्रकार',
+          'prof_business': 'व्यापार / व्यवसाय',
+          'prof_private': 'निजी नौकरी',
+          'prof_govt': 'सरकारी नौकरी',
+          'prof_freelance': 'पेशेवर / फ्रीलांसर',
+          'prof_student': 'छात्र',
+          'company_name': 'कंपनी / विभाग / व्यवसाय का नाम',
+          'designation': 'पद / भूमिका (Designation)',
+          'sec_contact': 'संपर्क और सुरक्षा',
+          'phone_label': '10 अंकों का मोबाइल नंबर *',
+          'sec_phone_label': 'दूसरा मोबाइल नंबर (वैकल्पिक)',
+          'email_label': 'ईमेल पता',
+          'pwd_label': 'पासवर्ड बनाएं (कम से कम 6 अक्षर) *',
+          'login_id_label': 'ईमेल या 10 अंकों का मोबाइल नंबर',
+          'login_pwd_label': 'पासवर्ड',
+          'sec_social': 'सोशल मीडिया लिंक',
+          'whatsapp': 'WhatsApp लिंक / नंबर',
+          'instagram': 'Instagram लिंक / यूजरनेम',
+          'facebook': 'Facebook प्रोफाइल लिंक',
+          'twitter': 'Twitter (X) प्रोफाइल लिंक',
+          'btn_login': 'लॉगिन करें',
+          'btn_signup': 'खाता बनाएं और शुरू करें',
+          'switch_to_signup': 'नया खाता बनाना है? साइन अप करें',
+          'switch_to_login': 'पहले से खाता है? लॉगिन करें',
+          'err_pwd_len': 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।',
+          'err_empty_login': 'कृपया ईमेल या मोबाइल नंबर दर्ज करें।',
+          'err_empty_name': 'कृपया नाम और ईमेल या 10 अंकों का मोबाइल नंबर दर्ज करें।',
+          'err_phone_invalid': 'कृपया मान्य 10 अंकों का मोबाइल नंबर दर्ज करें।',
+        },
+        'mr': {
+          'app_title_login': 'Star India - लॉगिन',
+          'app_title_signup': 'Star India - खाते तयार करा',
+          'header_login': 'आपल्या खात्यात लॉगिन करा',
+          'header_signup': 'Star India वर नवीन प्रोफाईल तयार करा',
+          'sec_personal': 'वैयक्तिक माहिती',
+          'first_name': 'पहिले नाव *',
+          'last_name': 'आडनाव',
+          'pick_birthdate': 'जन्मतारीख निवडा',
+          'birthdate_is': 'जन्मतारीख:',
+          'city': 'शहर / गाव',
+          'bio': 'बायो / स्वतःबद्दल थोडक्यात',
+          'hobbies': 'छंद / आवडी',
+          'sec_work': 'शिक्षण आणि व्यवसाय',
+          'edu_label': 'शिक्षणाचा स्तर',
+          'edu_primary': 'प्राथमिक शिक्षण',
+          'edu_secondary': 'माध्यमिक शिक्षण',
+          'edu_higher_sec': 'उच्च माध्यमिक शिक्षण',
+          'edu_college': 'कॉलेज',
+          'edu_higher_college': 'उच्च महाविद्यालय / पदव्युत्तर',
+          'edu_degree': 'पदवी / व्यावसायिक',
+          'prof_label': 'व्यवसायाचा प्रकार',
+          'prof_business': 'व्यवसाय / उद्योग',
+          'prof_private': 'खाजगी नोकरी',
+          'prof_govt': 'सरकारी नोकरी',
+          'prof_freelance': 'व्यावसायिक / फ्रीलान्सर',
+          'prof_student': 'विद्यार्थी',
+          'company_name': 'कंपनी / विभाग / व्यवसायाचे नाव',
+          'designation': 'पद / भूमिका (Designation)',
+          'sec_contact': 'संपर्क आणि सुरक्षितता',
+          'phone_label': '१० अंकी मोबाईल नंबर *',
+          'sec_phone_label': 'दुसरा मोबाईल नंबर (पर्यायी)',
+          'email_label': 'ईमेल पत्ता',
+          'pwd_label': 'पासवर्ड तयार करा (किमान ६ अक्षरे) *',
+          'login_id_label': 'ईमेल किंवा १० अंकी मोबाईल नंबर',
+          'login_pwd_label': 'पासवर्ड',
+          'sec_social': 'सोशल मीडिया लिंक्स',
+          'whatsapp': 'WhatsApp लिंक / नंबर',
+          'instagram': 'Instagram प्रोफाईल / युझरनेम',
+          'facebook': 'Facebook प्रोफाईल लिंक',
+          'twitter': 'Twitter (X) प्रोफाईल लिंक',
+          'btn_login': 'लॉगिन करा',
+          'btn_signup': 'खाते तयार करा आणि सुरू करा',
+          'switch_to_signup': 'नवीन खाते हवे आहे? साइन अप करा',
+          'switch_to_login': 'आधीच खाते आहे? लॉगिन करा',
+          'err_pwd_len': 'पासवर्ड किमान ६ अक्षरांचा असावा.',
+          'err_empty_login': 'कृपया ईमेल किंवा मोबाईल नंबर प्रविष्ट करा.',
+          'err_empty_name': 'कृपया नाव आणि ईमेल किंवा मोबाईल नंबर भरा.',
+          'err_phone_invalid': 'कृपया वैध १० अंकी मोबाईल नंबर प्रविष्ट करा.',
+        },
+        'ta': {
+          'app_title_login': 'Star India - உள்நுழைவு',
+          'app_title_signup': 'Star India - கணக்கு உருவாக்கு',
+          'header_login': 'உங்கள் கணக்கில் உள்நுழையவும்',
+          'header_signup': 'Star India இல் புதிய சுயவிவரத்தை உருவாக்கவும்',
+          'sec_personal': 'தனிப்பட்ட விவரங்கள்',
+          'first_name': 'முதல் பெயர் *',
+          'last_name': 'கடைசி பெயர்',
+          'pick_birthdate': 'பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்',
+          'birthdate_is': 'பிறந்த தேதி:',
+          'city': 'நகரம் / கிராமம்',
+          'bio': 'பயோ / உங்களைப் பற்றி சுருக்கமாக',
+          'hobbies': 'விருப்பங்கள் / பொழுதுபோக்குகள்',
+          'sec_work': 'கல்வி மற்றும் தொழில்',
+          'edu_label': 'கல்வி நிலை',
+          'edu_primary': 'தொடக்கக் கல்வி',
+          'edu_secondary': 'இடைநிலைக் கல்வி',
+          'edu_higher_sec': 'மேல்நிலைக் கல்வி',
+          'edu_college': 'கல்லூரி',
+          'edu_higher_college': 'முதுகலை / உயர் கல்லூரி',
+          'edu_degree': 'பட்டப்படிப்பு / தொழில்முறை',
+          'prof_label': 'தொழில் வகை',
+          'prof_business': 'வணிகம் / சுயதொழில்',
+          'prof_private': 'தனியார் வேலை',
+          'prof_govt': 'அரசு வேலை',
+          'prof_freelance': 'தொழில்முறை / ஃப்ரீலான்ஸர்',
+          'prof_student': 'மாணவர்',
+          'company_name': 'நிறுவனம் / துறை / வணிகப் பெயர்',
+          'designation': 'பதவி / பங்கு (Designation)',
+          'sec_contact': 'தொடர்பு மற்றும் பாதுகாப்பு',
+          'phone_label': '10 இலக்க மொபைல் எண் *',
+          'sec_phone_label': 'இரண்டாவது மொபைல் எண் (விருப்பத்தேர்வு)',
+          'email_label': 'மின்னஞ்சல் முகவரி',
+          'pwd_label': 'கடவுச்சொல் (குறைந்தது 6 எழுத்துக்கள்) *',
+          'login_id_label': 'மின்னஞ்சல் அல்லது 10 இலக்க மொபைல் எண்',
+          'login_pwd_label': 'கடவுச்சொல்',
+          'sec_social': 'சமூக ஊடக இணைப்புகள்',
+          'whatsapp': 'WhatsApp இணைப்பு / எண்',
+          'instagram': 'Instagram சுயவிவரம்',
+          'facebook': 'Facebook சுயவிவர இணைப்பு',
+          'twitter': 'Twitter (X) சுயவிவர இணைப்பு',
+          'btn_login': 'உள்நுழையவும்',
+          'btn_signup': 'கணக்கை உருவாக்கி தொடங்கவும்',
+          'switch_to_signup': 'புதிய கணக்கு வேண்டுமா? பதிவு செய்க',
+          'switch_to_login': 'ஏற்கனவே கணக்கு உள்ளதா? உள்நுழைக',
+          'err_pwd_len': 'கடவுச்சொல் குறைந்தது 6 எழுத்துக்களாக இருக்க வேண்டும்.',
+          'err_empty_login': 'மின்னஞ்சல் அல்லது மொபைல் எண்ணை உள்ளிடவும்.',
+          'err_empty_name': 'பெயர் மற்றும் மொபைல் அல்லது மின்னஞ்சலை உள்ளிடவும்.',
+          'err_phone_invalid': 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.',
+        },
+        'te': {
+          'app_title_login': 'Star India - లాగిన్',
+          'app_title_signup': 'Star India - ఖాతాను సృష్టించండి',
+          'header_login': 'మీ ఖాతాకు లాగిన్ చేయండి',
+          'header_signup': 'Star India లో కొత్త ప్రొఫైల్ సృష్టించండి',
+          'sec_personal': 'వ్యక్తిగత వివరాలు',
+          'first_name': 'మొదటి పేరు *',
+          'last_name': 'చివరి పేరు',
+          'pick_birthdate': 'పుట్టిన తేదీని ఎంచుకోండి',
+          'birthdate_is': 'పుట్టిన తేదీ:',
+          'city': 'నగరం / గ్రామం',
+          'bio': 'బయో / మీ గురించి సంక్షిప్తంగా',
+          'hobbies': 'అభిరుచులు / ఇష్టాలు',
+          'sec_work': 'విద్య మరియు వృత్తి',
+          'edu_label': 'విద్యా స్థాయి',
+          'edu_primary': 'ప్రాథమిక విద్య',
+          'edu_secondary': 'మాధ్యమిక విద్య',
+          'edu_higher_sec': 'ఉన్నత మాధ్యమిక విద్య',
+          'edu_college': 'కళాశాల',
+          'edu_higher_college': 'పోస్ట్ గ్రాడ్యుయేట్ / ఉన్నత కళాశాల',
+          'edu_degree': 'డిగ్రీ / ప్రొఫెషనల్',
+          'prof_label': 'వృత్తి రకం',
+          'prof_business': 'వ్యాపారం / స్వయం ఉపాధి',
+          'prof_private': 'ప్రైవేట్ ఉద్యోగం',
+          'prof_govt': 'ప్రభుత్వ ఉద్యోగం',
+          'prof_freelance': 'ప్రొఫెషనల్ / ఫ్రీలాన్సర్',
+          'prof_student': 'విద్యార్థి',
+          'company_name': 'కంపెనీ / విభాగం / వ్యాపార పేరు',
+          'designation': 'హోదా / పాత్ర (Designation)',
+          'sec_contact': 'సంప్రదింపు మరియు భద్రత',
+          'phone_label': '10 అంకెల మొబైల్ నంబర్ *',
+          'sec_phone_label': 'రెండవ మొబైల్ నంబర్ (ఐచ్ఛికం)',
+          'email_label': 'ఈమెయిల్ చిరునామా',
+          'pwd_label': 'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు) *',
+          'login_id_label': 'ఈమెయిల్ లేదా 10 అంకెల మొబైల్ నంబర్',
+          'login_pwd_label': 'పాస్‌వర్డ్',
+          'sec_social': 'సోషల్ మీడియా లింకులు',
+          'whatsapp': 'WhatsApp లింక్ / నంబర్',
+          'instagram': 'Instagram ప్రొఫైల్',
+          'facebook': 'Facebook ప్రొఫైల్ లింక్',
+          'twitter': 'Twitter (X) ప్రొఫైల్ లింక్',
+          'btn_login': 'లాగిన్ చేయండి',
+          'btn_signup': 'ఖాతాను సృష్టించి ప్రారంభించండి',
+          'switch_to_signup': 'కొత్త ఖాతా కావాలా? సైన్ అప్ చేయండి',
+          'switch_to_login': 'ఇప్పటికే ఖాతా ఉందా? లాగిన్ చేయండి',
+          'err_pwd_len': 'పాస్‌వర్డ్ కనీసం 6 అక్షరాలు ఉండాలి.',
+          'err_empty_login': 'దయచేసి ఈమెయిల్ లేదా మొబైల్ నంబర్ నమోదు చేయండి.',
+          'err_empty_name': 'దయచేసి పేరు మరియు మొబైల్ లేదా ఈమెయిల్ నమోదు చేయండి.',
+          'err_phone_invalid': 'దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి.',
+        },
+        'bn': {
+          'app_title_login': 'Star India - লগইন',
+          'app_title_signup': 'Star India - অ্যাকাউন্ট তৈরি করুন',
+          'header_login': 'আপনার অ্যাকাউন্টে লগইন করুন',
+          'header_signup': 'Star India-তে নতুন প্রোফাইল তৈরি করুন',
+          'sec_personal': 'ব্যক্তিগত বিবরণ',
+          'first_name': 'প্রথম নাম *',
+          'last_name': 'শেষ নাম',
+          'pick_birthdate': 'জন্মতারিখ নির্বাচন করুন',
+          'birthdate_is': 'জন্মতারিখ:',
+          'city': 'শহর / গ্রাম',
+          'bio': 'বায়ো / নিজের সম্পর্কে সংক্ষেপে',
+          'hobbies': 'শখ / পছন্দ',
+          'sec_work': 'শিক্ষা এবং পেশা',
+          'edu_label': 'শিক্ষাগত যোগ্যতা',
+          'edu_primary': 'প্রাথমিক শিক্ষা',
+          'edu_secondary': 'মাধ্যমিক শিক্ষা',
+          'edu_higher_sec': 'উচ্চ মাধ্যমিক শিক্ষা',
+          'edu_college': 'কলেজ',
+          'edu_higher_college': 'স্নাতকোত্তর / উচ্চ কলেজ',
+          'edu_degree': 'ডিগ্রি / পেশাদার',
+          'prof_label': 'পেশার ধরন',
+          'prof_business': 'ব্যবসা / স্বনিযুক্ত',
+          'prof_private': 'বেসরকারি চাকরি',
+          'prof_govt': 'সরকারি চাকরি',
+          'prof_freelance': 'পেশাদার / ফ্রিল্যান্সার',
+          'prof_student': 'ছাত্র / ছাত্রী',
+          'company_name': 'কোম্পানি / বিভাগ / ব্যবসার নাম',
+          'designation': 'পদবী / ভূমিকা (Designation)',
+          'sec_contact': 'যোগাযোগ এবং নিরাপত্তা',
+          'phone_label': '১০ সংখ্যার মোবাইল নম্বর *',
+          'sec_phone_label': 'দ্বিতীয় মোবাইল নম্বর (ঐচ্ছিক)',
+          'email_label': 'ইমেল ঠিকানা',
+          'pwd_label': 'পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *',
+          'login_id_label': 'ইমেল বা ১০ সংখ্যার মোবাইল নম্বর',
+          'login_pwd_label': 'পাসওয়ার্ড',
+          'sec_social': 'সোশ্যাল মিডিয়া লিঙ্ক',
+          'whatsapp': 'WhatsApp লিঙ্ক / নম্বর',
+          'instagram': 'Instagram প্রোফাইল',
+          'facebook': 'Facebook প্রোফাইল লিঙ্ক',
+          'twitter': 'Twitter (X) প্রোফাইল লিঙ্ক',
+          'btn_login': 'লগইন করুন',
+          'btn_signup': 'অ্যাকাউন্ট তৈরি করে শুরু করুন',
+          'switch_to_signup': 'নতুন অ্যাকাউন্ট প্রয়োজন? সাইন আপ করুন',
+          'switch_to_login': 'ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন করুন',
+          'err_pwd_len': 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।',
+          'err_empty_login': 'অনুগ্রহ করে ইমেল বা মোবাইল নম্বর লিখুন।',
+          'err_empty_name': 'অনুগ্রহ করে নাম এবং মোবাইল বা ইমেল লিখুন।',
+          'err_phone_invalid': 'অনুগ্রহ করে একটি সঠিক ১০ সংখ্যার মোবাইল নম্বর লিখুন।',
+        },
+        'kn': {
+          'app_title_login': 'Star India - ಲಾಗಿನ್',
+          'app_title_signup': 'Star India - ಖಾತೆ ರಚಿಸಿ',
+          'header_login': 'ನಿಮ್ಮ ಖಾತೆಗೆ ಲಾಗಿನ್ ಮಾಡಿ',
+          'header_signup': 'Star India ನಲ್ಲಿ ಹೊಸ ಪ್ರೊಫೈಲ್ ರಚಿಸಿ',
+          'sec_personal': 'ವೈಯಕ್ತಿಕ ವಿವರಗಳು',
+          'first_name': 'ಮೊದಲ ಹೆಸರು *',
+          'last_name': 'ಕೊನೆಯ ಹೆಸರು',
+          'pick_birthdate': 'ಹುಟ್ಟಿದ ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+          'birthdate_is': 'ಹುಟ್ಟಿದ ದಿನಾಂಕ:',
+          'city': 'ನಗರ / ಊರು',
+          'bio': 'ಬಯೋ / ನಿಮ್ಮ ಬಗ್ಗೆ ಸಂಕ್ಷಿಪ್ತವಾಗಿ',
+          'hobbies': 'ಹವ್ಯಾಸಗಳು / ಆಸಕ್ತಿಗಳು',
+          'sec_work': 'ಶಿಕ್ಷಣ ಮತ್ತು ಉದ್ಯೋಗ',
+          'edu_label': 'ಶಿಕ್ಷಣದ ಮಟ್ಟ',
+          'edu_primary': 'ಪ್ರಾಥಮಿಕ ಶಿಕ್ಷಣ',
+          'edu_secondary': 'ಪ್ರೌಢ ಶಿಕ್ಷಣ',
+          'edu_higher_sec': 'ಪದವಿ ಪೂರ್ವ ಶಿಕ್ಷಣ',
+          'edu_college': 'ಕಾಲೇಜು',
+          'edu_higher_coll
