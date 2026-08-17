@@ -264,6 +264,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildStatCounter(String subCollection, String label) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUid)
+          .collection(subCollection)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+        return Column(
+          children: [
+            Text(
+              '$count',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+            ),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMyPosts() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('posts')
+          .where('authorUid', isEqualTo: _currentUid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(30),
+            child: Center(
+              child: Text(
+                'તમે હજુ કોઈ પોસ્ટ મૂકી નથી.',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          );
+        }
+
+        final posts = snapshot.data!.docs;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final postData = posts[index].data() as Map<String, dynamic>;
+            final content = postData['content'] ?? '';
+            final likesCount = (postData['likes'] as List?)?.length ?? 0;
+
+            return Card(
+              elevation: 0.5,
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(content, style: const TextStyle(fontSize: 14, height: 1.4)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite, size: 16, color: Colors.redAccent),
+                        const SizedBox(width: 4),
+                        Text('$likesCount likes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_currentUid.isEmpty) {
@@ -334,7 +419,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Profile Header Card
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.all(20),
@@ -368,64 +452,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text(city, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
                           ],
                         ),
-                      ],
-                      if (bio.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          bio,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
-                        ),
-                      ],
-                      const SizedBox(height: 14),
-                      OutlinedButton.icon(
-                        onPressed: () => _openEditProfileDialog(data),
-                        icon: const Icon(Icons.edit, size: 16, color: Color(0xFF1E3A8A)),
-                        label: const Text('પ્રોફાઇલ એડિટ કરો', style: TextStyle(color: Color(0xFF1E3A8A))),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF1E3A8A)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Followers / Following Interactive Stats
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _showUserListBottomSheet('followers', 'Followers'),
-                            child: _buildStatCounter('followers', 'Followers'),
-                          ),
-                          Container(height: 25, width: 1, color: Colors.grey.shade300),
-                          GestureDetector(
-                            onTap: () => _showUserListBottomSheet('following', 'Following'),
-                            child: _buildStatCounter('following', 'Following'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Details Card (Education & Hobbies)
-                if (education.isNotEmpty || hobbies.isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (education.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.school, size: 18, color: Color(0xFF1E3A8A)),
-                                const SizedBox(width: 8),
-                                Expande
+          
