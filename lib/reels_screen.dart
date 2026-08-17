@@ -422,7 +422,6 @@ class _ReelsScreenState extends State<ReelsScreen> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Video Player Widget
                   if (videoUrl.isNotEmpty)
                     ReelVideoPlayerItem(videoUrl: videoUrl)
                   else
@@ -432,12 +431,10 @@ class _ReelsScreenState extends State<ReelsScreen> {
                         child: Icon(
                           Icons.play_circle_outline,
                           size: 80,
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: Colors.white.withOpacity(0.3),
                         ),
                       ),
                     ),
-
-                  // Bottom Gradient Overlay
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -449,15 +446,13 @@ class _ReelsScreenState extends State<ReelsScreen> {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.85),
+                            Colors.black.withOpacity(0.85),
                             Colors.transparent,
                           ],
                         ),
                       ),
                     ),
                   ),
-
-                  // User Info & Caption
                   Positioned(
                     left: 16,
                     bottom: 30,
@@ -492,4 +487,8 @@ class _ReelsScreenState extends State<ReelsScreen> {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                 
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+           
