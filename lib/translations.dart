@@ -95,7 +95,7 @@ const Map<String, Map<String, String>> appTranslations = {
     'desig': 'पद / भूमिका (Designation)',
     'sec_c': 'संपर्क और सुरक्षा',
     'phone': '10 अंकों का मोबाइल नंबर *',
-    'phone2': 'दूसरा मोबाइल નંબર (वैकल्पिक)',
+    'phone2': 'दूसरा मोबाइल नंबर (वैकल्पिक)',
     'email': 'ईमेल पता',
     'pwd': 'पासवर्ड (कम से कम 6 अक्षर) *',
     'login_id': 'ईमेल या 10 अंकों का मोबाइल',
@@ -492,5 +492,13 @@ const Map<String, Map<String, String>> appTranslations = {
     'e_login': 'ای میل یا موبائل نمبر درج کریں۔',
     'e_req': 'تمام تفصیلات درج کریں۔',
     'e_phone': '10 ہندسوں کا نمبر درج کریں۔',
-  }
+  },
 };
+
+String tr(String key, {String langCode = 'gu'}) {
+  if (appTranslations.containsKey(langCode) &&
+      appTranslations[langCode]!.containsKey(key)) {
+    return appTranslations[langCode]![key]!;
+  }
+  return appTranslations['gu']?[key] ?? appTranslations['en']?[key] ?? key;
+}
