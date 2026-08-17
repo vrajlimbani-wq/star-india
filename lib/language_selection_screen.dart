@@ -83,7 +83,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
+                        backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
                         child: Text(
                           lang['code']!.toUpperCase(),
                           style: const TextStyle(
@@ -103,7 +103,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AuthScreen(selectedLanguage: lang['code']!),
+                            builder: (context) => const AuthScreen(),
                           ),
                         );
                       },
