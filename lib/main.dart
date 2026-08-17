@@ -97,6 +97,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   int _backPressCount = 0;
   DateTime? _lastBackPressTime;
+  late final PageController _pageController;
 
   final List<Widget> _screens = [
     const FeedScreen(),
@@ -105,6 +106,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const ChatScreen(peerUid: '', peerName: 'Star Chats'),
     const ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _handleBackPress(bool didPop) {
     if (didPop) return;
@@ -142,8 +155,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       canPop: false,
       onPopInvoked: _handleBackPress,
       child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
           children: _screens,
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -152,6 +170,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             setState(() {
               _currentIndex = index;
             });
+            _pageController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
           },
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFF1E3A8A),
