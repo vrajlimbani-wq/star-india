@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/user_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,11 +17,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await FirebaseAuth.instance.signOut();
   }
 
+  void _showUserListBottomSheet(String collectionName, String title) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+              ),
+              const Divider(),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(_currentUid)
+                      .collection(collectionName)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(child: Text('કોઈ $title મળ્યા નથી.', style: const TextStyle(color: Colors.grey)));
+                    }
+
+                    final docs = snapshot.data!.docs;
+                    return ListView.builder(
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final targetUid = docs[index].id;
+                        return FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance.collection('users').doc(targetUid).get(),
+                          builder: (context, userSnap) {
+                            String name = 'Star User';
+                            String city = 'Star India';
+                            if (userSnap.hasData && userSnap.data!.exists) {
+                              final uData = userSnap.data!.data() as Map<String, dynamic>;
+                              name = uData['fullName'] ?? uData['name'] ?? 'Star User';
+                              city = uData['city'] ?? 'Star India';
+                            }
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: const Color(0xFF1E3A8A),
+                                child: Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(city),
+                              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserProfileScreen(targetUid: targetUid),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _openEditProfileDialog(Map<String, dynamic> currentData) {
     final nameController = TextEditingController(text: currentData['fullName'] ?? '');
     final bioController = TextEditingController(text: currentData['bio'] ?? '');
     final hobbiesController = TextEditingController(text: currentData['hobbies'] ?? '');
     final cityController = TextEditingController(text: currentData['city'] ?? '');
+    final stateController = TextEditingController(text: currentData['state'] ?? 'Gujarat');
     final educationController = TextEditingController(text: currentData['education'] ?? '');
     final professionController = TextEditingController(text: currentData['designation'] ?? currentData['professionType'] ?? '');
     final phone1Controller = TextEditingController(text: currentData['phone1'] ?? '');
@@ -29,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final instagramController = TextEditingController(text: currentData['instagram'] ?? '');
     final facebookController = TextEditingController(text: currentData['facebook'] ?? '');
     final twitterController = TextEditingController(text: currentData['twitter'] ?? '');
+    bool isContactVisible = currentData['isContactVisible'] ?? true;
 
     showModalBottomSheet(
       context: context,
@@ -38,94 +135,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.85,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(ctx).size.height * 0.85,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'પ્રોફાઇલ એડિટ કરો',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'પ્રોફાઇલ એડિટ કરો',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
+                    const Divider(),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          _buildInputField(nameController, 'પૂરું નામ (Full Name)'),
+                          _buildInputField(bioController, 'બાયો (Bio)', maxLines: 2),
+                          _buildInputField(hobbiesController, 'શોખ / પસંદગીઓ (Hobbies)'),
+                          _buildInputField(cityController, 'શહેર (City)'),
+                          _buildInputField(stateController, 'રાજ્ય (State)'),
+                          _buildInputField(educationController, 'અભ્યાસ / ડિગ્રી (Education)'),
+                          _buildInputField(professionController, 'ધંધો / નોકરી / પદ (Profession)'),
+                          _buildInputField(phone1Controller, 'મોબાઈલ નંબર ૧ (Primary)', keyboardType: TextInputType.phone),
+                          _buildInputField(phone2Controller, 'મોબાઈલ નંબર ૨ (Secondary)', keyboardType: TextInputType.phone),
+                          _buildInputField(whatsappController, 'WhatsApp નંબર / લિંક'),
+                          _buildInputField(instagramController, 'Instagram લિંક'),
+                          _buildInputField(facebookController, 'Facebook લિંક'),
+                          _buildInputField(twitterController, 'X (Twitter) લિંક'),
+                          const SizedBox(height: 10),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('સંપર્ક વિગત અન્યને બતાવો (Show Contact)', style: TextStyle(fontSize: 14)),
+                            value: isContactVisible,
+                            activeColor: const Color(0xFF1E3A8A),
+                            onChanged: (val) {
+                              setSheetState(() {
+                                isContactVisible = val;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await FirebaseFirestore.instance.collection('users').doc(_currentUid).set({
+                              'fullName': nameController.text.trim(),
+                              'bio': bioController.text.trim(),
+                              'hobbies': hobbiesController.text.trim(),
+                              'city': cityController.text.trim(),
+                              'state': stateController.text.trim(),
+                              'education': educationController.text.trim(),
+                              'designation': professionController.text.trim(),
+                              'phone1': phone1Controller.text.trim(),
+                              'phone2': phone2Controller.text.trim(),
+                              'whatsapp': whatsappController.text.trim(),
+                              'instagram': instagramController.text.trim(),
+                              'facebook': facebookController.text.trim(),
+                              'twitter': twitterController.text.trim(),
+                              'isContactVisible': isContactVisible,
+                            }, SetOptions(merge: true));
+
+                            if (mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('પ્રોફાઇલ વિગતો સફળતાપૂર્વક સેવ થઈ ગઈ છે!'),
+                                  backgroundColor: Color(0xFF1E3A8A),
+                                ),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E3A8A),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('સેવ કરો (Save)', style: TextStyle(color: Colors.white, fontSize: 16)),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const Divider(),
-                Expanded(
-                  child: ListView(
-                    children: [
-                      _buildInputField(nameController, 'પૂરું નામ (Full Name)'),
-                      _buildInputField(bioController, 'બાયો (Bio)', maxLines: 2),
-                      _buildInputField(hobbiesController, 'શોખ / પસંદગીઓ (Hobbies)'),
-                      _buildInputField(cityController, 'શહેર (City)'),
-                      _buildInputField(educationController, 'અભ્યાસ / ડિગ્રી (Education)'),
-                      _buildInputField(professionController, 'ધંધો / નોકરી / પદ (Profession)'),
-                      _buildInputField(phone1Controller, 'મોબાઈલ નંબર ૧ (Primary)', keyboardType: TextInputType.phone),
-                      _buildInputField(phone2Controller, 'મોબાઈલ નંબર ૨ (Secondary)', keyboardType: TextInputType.phone),
-                      _buildInputField(whatsappController, 'WhatsApp લિંક / નંબર'),
-                      _buildInputField(instagramController, 'Instagram પ્રોફાઇલ લિંક'),
-                      _buildInputField(facebookController, 'Facebook પ્રોફાઇલ લિંક'),
-                      _buildInputField(twitterController, 'X (Twitter) લિંક'),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await FirebaseFirestore.instance.collection('users').doc(_currentUid).set({
-                          'fullName': nameController.text.trim(),
-                          'bio': bioController.text.trim(),
-                          'hobbies': hobbiesController.text.trim(),
-                          'city': cityController.text.trim(),
-                          'education': educationController.text.trim(),
-                          'designation': professionController.text.trim(),
-                          'phone1': phone1Controller.text.trim(),
-                          'phone2': phone2Controller.text.trim(),
-                          'whatsapp': whatsappController.text.trim(),
-                          'instagram': instagramController.text.trim(),
-                          'facebook': facebookController.text.trim(),
-                          'twitter': twitterController.text.trim(),
-                        }, SetOptions(merge: true));
-
-                        if (mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('પ્રોફાઇલ વિગતો સેવ થઈ ગઈ છે!'),
-                              backgroundColor: Color(0xFF1E3A8A),
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('સેવ કરો (Save)', style: TextStyle(color: Colors.white, fontSize: 16)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -273,13 +389,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Followers / Following Stats
+                      // Followers / Following Interactive Stats
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildStatCounter('followers', 'Followers'),
+                          GestureDetector(
+                            onTap: () => _showUserListBottomSheet('followers', 'Followers'),
+                            child: _buildStatCounter('followers', 'Followers'),
+                          ),
                           Container(height: 25, width: 1, color: Colors.grey.shade300),
-                          _buildStatCounter('following', 'Following'),
+                          GestureDetector(
+                            onTap: () => _showUserListBottomSheet('following', 'Following'),
+                            child: _buildStatCounter('following', 'Following'),
+                          ),
                         ],
                       ),
                     ],
@@ -306,130 +428,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 const Icon(Icons.school, size: 18, color: Color(0xFF1E3A8A)),
                                 const SizedBox(width: 8),
-                                Expanded(child: Text('અભ્યાસ: $education', style: const TextStyle(fontSize: 13.5))),
-                              ],
-                            ),
-                          ),
-                        if (hobbies.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.interests, size: 18, color: Color(0xFF1E3A8A)),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text('શોખ: $hobbies', style: const TextStyle(fontSize: 13.5))),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 10),
-
-                // My Posts Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.grid_on, size: 18, color: Color(0xFF1E3A8A)),
-                      SizedBox(width: 8),
-                      Text(
-                        'My Posts',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildMyPosts(),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildStatCounter(String subCollection, String label) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUid)
-          .collection(subCollection)
-          .snapshots(),
-      builder: (context, snapshot) {
-        final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
-        return Column(
-          children: [
-            Text(
-              '$count',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
-            ),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildMyPosts() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .where('authorUid', isEqualTo: _currentUid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(30),
-            child: Center(
-              child: Text(
-                'તમે હજુ કોઈ પોસ્ટ મૂકી નથી.',
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            ),
-          );
-        }
-
-        final posts = snapshot.data!.docs;
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: posts.length,
-          itemBuilder: (context, index) {
-            final postData = posts[index].data() as Map<String, dynamic>;
-            final content = postData['content'] ?? '';
-            final likesCount = (postData['likes'] as List?)?.length ?? 0;
-
-            return Card(
-              elevation: 0.5,
-              margin: const EdgeInsets.only(bottom: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(content, style: const TextStyle(fontSize: 14, height: 1.4)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.favorite, size: 16, color: Colors.redAccent),
-                        const SizedBox(width: 4),
-                        Text('$likesCount likes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
+                                Expande
