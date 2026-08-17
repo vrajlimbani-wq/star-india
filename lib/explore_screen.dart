@@ -255,7 +255,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         children: [
                           CircleAvatar(
                             radius: 28,
-                            backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
+                            backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
                             child: Text(
                               name.isNotEmpty ? name[0].toUpperCase() : 'U',
                               style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold, fontSize: 20),
@@ -297,6 +297,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 side: BorderSide(color: Colors.grey.shade200),
               ),
               child: ListTile(
+                onTap: () {
+                  setState(() {
+                    _searchController.text = t['tag']!.replaceAll('#', '');
+                    _searchQuery = _searchController.text.toLowerCase();
+                  });
+                },
                 title: Text(
                   t['tag']!,
                   style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
