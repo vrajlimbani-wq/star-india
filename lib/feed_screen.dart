@@ -107,7 +107,6 @@ class _FeedScreenState extends State<FeedScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Stories Bar
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -146,7 +145,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(2.5),
                                     child: CircleAvatar(
-                                      backgroundColor: color.withValues(alpha: 0.15),
+                                      backgroundColor: color.withOpacity(0.15),
                                       child: Icon(story['icon'] as IconData, color: color, size: 26),
                                     ),
                                   ),
@@ -183,8 +182,6 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
             ),
             const SizedBox(height: 10),
-
-            // Post Input Box
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Card(
@@ -244,8 +241,6 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
             ),
             const SizedBox(height: 10),
-
-            // Posts Stream
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('posts')
