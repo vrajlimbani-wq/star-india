@@ -22,11 +22,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final targetRef = FirebaseFirestore.instance.collection('users').doc(widget.targetUid);
 
     if (isFollowing) {
-      // Unfollow
       await currentRef.collection('following').doc(widget.targetUid).delete();
       await targetRef.collection('followers').doc(_currentUid).delete();
     } else {
-      // Follow
       await currentRef.collection('following').doc(widget.targetUid).set({
         'followedAt': FieldValue.serverTimestamp(),
       });
@@ -34,6 +32,102 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         'followerAt': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  void _showUserList(String collectionName, String title) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+              ),
+              const Divider(),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.targetUid)
+                      .collection(collectionName)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(child: Text('કોઈ $title મળ્યા નથી.', style: const TextStyle(color: Colors.grey)));
+                    }
+
+                    final docs = snapshot.data!.docs;
+                    return ListView.builder(
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final uId = docs[index].id;
+                        return FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance.collection('users').doc(uId).get(),
+                          builder: (context, userSnap) {
+                            String name = 'Star User';
+                            String city = 'Star India';
+                            if (userSnap.hasData && userSnap.data!.exists) {
+                              final uData = userSnap.data!.data() as Map<String, dynamic>;
+                              name = uData['fullName'] ?? uData['name'] ?? 'Star User';
+                              city = uData['city'] ?? 'Star India';
+                            }
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: const Color(0xFF1E3A8A),
+                                child: Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(city),
+                              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                if (uId != widget.targetUid) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UserProfileScreen(targetUid: uId),
+                                    ),
+                                  );
+                                }
+                              },
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -71,6 +165,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           final profession = data['designation'] ?? data['professionType'] ?? 'Member';
           final city = data['city'] ?? '';
           final bio = data['bio'] ?? '';
+          final education = data['education'] ?? '';
+          final hobbies = data['hobbies'] ?? '';
+          final isContactVisible = data['isContactVisible'] ?? false;
+          final phone1 = data['phone1'] ?? '';
 
           return SingleChildScrollView(
             child: Column(
@@ -120,13 +218,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ],
                       const SizedBox(height: 20),
 
-                      // Follower / Following Stats
+                      // Follower / Following Interactive Stats
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildStatCounter('followers', 'Followers'),
+                          GestureDetector(
+                            onTap: () => _showUserList('followers', 'Followers'),
+                            child: _buildStatCounter('followers', 'Followers'),
+                          ),
                           Container(height: 25, width: 1, color: Colors.grey.shade300),
-                          _buildStatCounter('following', 'Following'),
+                          GestureDetector(
+                            onTap: () => _showUserList('following', 'Following'),
+                            child: _buildStatCounter('following', 'Following'),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -194,7 +298,55 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+
+                // Details Card (Education, Hobbies, Contact)
+                if (education.isNotEmpty || hobbies.isNotEmpty || (isContactVisible && phone1.isNotEmpty))
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (education.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.school, size: 18, color: Color(0xFF1E3A8A)),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('અભ્યાસ: $education', style: const TextStyle(fontSize: 13.5))),
+                              ],
+                            ),
+                          ),
+                        if (hobbies.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.interests, size: 18, color: Color(0xFF1E3A8A)),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('શોખ: $hobbies', style: const TextStyle(fontSize: 13.5))),
+                              ],
+                            ),
+                          ),
+                        if (isContactVisible && phone1.isNotEmpty)
+                          Row(
+                            children: [
+                              const Icon(Icons.phone, size: 18, color: Colors.green),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text('સંપર્ક: $phone1', style: const TextStyle(fontSize: 13.5))),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 10),
 
                 // User Posts Section
                 Padding(
@@ -220,7 +372,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // Count builder for followers and following
   Widget _buildStatCounter(String subCollection, String label) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -244,7 +395,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // Stream of user's posts
   Widget _buildUserPosts() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -297,13 +447,4 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Text('$likesCount likes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
+                
