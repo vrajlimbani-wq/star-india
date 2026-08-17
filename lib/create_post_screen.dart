@@ -88,7 +88,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     try {
       String? imageUrl;
 
-      // ફોટો હોય તો Firebase Storage માં અપલોડ કરો
       if (_selectedImage != null) {
         final ref = FirebaseStorage.instance
             .ref()
@@ -99,19 +98,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         imageUrl = await ref.getDownloadURL();
       }
 
-      // યુઝરની વિગત મેળવો
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final userData = userDoc.data() ?? {};
 
       final authorName = userData['fullName'] ??
           '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-      final authorProfession = userData['designation'] ?? userData['professionType'] ?? '';
+      final authorProfession = userData['designation'] ?? userData['professionType'] ?? 'Star Member';
+      final authorCity = userData['city'] ?? 'Gujarat';
 
-      // Firestore માં પોસ્ટ સેવ કરો
       await FirebaseFirestore.instance.collection('posts').add({
         'authorUid': user.uid,
         'authorName': authorName.isNotEmpty ? authorName : 'Star User',
-        'authorProfession': authorProfession,
+        'authorProfession': authorProfession.isNotEmpty ? authorProfession : authorCity,
         'content': text,
         'imageUrl': imageUrl,
         'likes': [],
@@ -124,7 +122,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           _selectedImage = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('પોસ્ટ સફળતાપૂર્વક અપલોડ થઈ ગઈ!')),
+          const SnackBar(
+            content: Text('પોસ્ટ સફળતાપૂર્વક અપલોડ થઈ ગઈ!'),
+            backgroundColor: Color(0xFF1E3A8A),
+          ),
         );
         Navigator.pop(context);
       }
