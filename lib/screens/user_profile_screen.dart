@@ -130,248 +130,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isOwnProfile = _currentUid == widget.targetUid;
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E3A8A)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(widget.targetUid).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
-          }
-
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('યુઝર પ્રોફાઇલ મળી નથી.'));
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final fullName = data['fullName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
-          final profession = data['designation'] ?? data['professionType'] ?? 'Member';
-          final city = data['city'] ?? '';
-          final bio = data['bio'] ?? '';
-          final education = data['education'] ?? '';
-          final hobbies = data['hobbies'] ?? '';
-          final isContactVisible = data['isContactVisible'] ?? false;
-          final phone1 = data['phone1'] ?? '';
-
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                // Top Header Section
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 45,
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        child: Text(
-                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
-                          style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        fullName.isNotEmpty ? fullName : 'Star User',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        profession,
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
-                      ),
-                      if (city.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(city, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-                          ],
-                        ),
-                      ],
-                      if (bio.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          bio,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-
-                      // Follower / Following Interactive Stats
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _showUserList('followers', 'Followers'),
-                            child: _buildStatCounter('followers', 'Followers'),
-                          ),
-                          Container(height: 25, width: 1, color: Colors.grey.shade300),
-                          GestureDetector(
-                            onTap: () => _showUserList('following', 'Following'),
-                            child: _buildStatCounter('following', 'Following'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Action Buttons (Follow & Message)
-                      if (!isOwnProfile)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: StreamBuilder<DocumentSnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(_currentUid)
-                                    .collection('following')
-                                    .doc(widget.targetUid)
-                                    .snapshots(),
-                                builder: (context, followSnap) {
-                                  final isFollowing = followSnap.hasData && followSnap.data!.exists;
-
-                                  return ElevatedButton(
-                                    onPressed: () => _toggleFollow(isFollowing),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
-                                      foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                    ),
-                                    child: Text(
-                                      isFollowing ? 'Following' : 'Follow',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChatScreen(
-                                        peerUid: widget.targetUid,
-                                        peerName: fullName.isNotEmpty ? fullName : 'Star User',
-                                      ),
-                                    ),
-                                  );
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFF1E3A8A)),
-                                  foregroundColor: const Color(0xFF1E3A8A),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                child: const Text(
-                                  'Message',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Details Card (Education, Hobbies, Contact)
-                if (education.isNotEmpty || hobbies.isNotEmpty || (isContactVisible && phone1.isNotEmpty))
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (education.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.school, size: 18, color: Color(0xFF1E3A8A)),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text('અભ્યાસ: $education', style: const TextStyle(fontSize: 13.5))),
-                              ],
-                            ),
-                          ),
-                        if (hobbies.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.interests, size: 18, color: Color(0xFF1E3A8A)),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text('શોખ: $hobbies', style: const TextStyle(fontSize: 13.5))),
-                              ],
-                            ),
-                          ),
-                        if (isContactVisible && phone1.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.phone, size: 18, color: Colors.green),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text('સંપર્ક: $phone1', style: const TextStyle(fontSize: 13.5))),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 10),
-
-                // User Posts Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.grid_on, size: 18, color: Color(0xFF1E3A8A)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Posts',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildUserPosts(),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildStatCounter(String subCollection, String label) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -447,4 +205,245 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Text('$likesCount likes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                       ],
                     ),
-                
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isOwnProfile = _currentUid == widget.targetUid;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E3A8A)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').doc(widget.targetUid).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A)));
+          }
+
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text('યુઝર પ્રોફાઇલ મળી નથી.'));
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final fullName = data['fullName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+          final profession = data['designation'] ?? data['professionType'] ?? 'Member';
+          final city = data['city'] ?? '';
+          final bio = data['bio'] ?? '';
+          final education = data['education'] ?? '';
+          final hobbies = data['hobbies'] ?? '';
+          final isContactVisible = data['isContactVisible'] ?? false;
+          final phone1 = data['phone1'] ?? '';
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 45,
+                        backgroundColor: const Color(0xFF1E3A8A),
+                        child: Text(
+                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                          style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        fullName.isNotEmpty ? fullName : 'Star User',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        profession,
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                      ),
+                      if (city.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(city, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      ],
+                      if (bio.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          bio,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showUserList('followers', 'Followers'),
+                            child: _buildStatCounter('followers', 'Followers'),
+                          ),
+                          Container(height: 25, width: 1, color: Colors.grey.shade300),
+                          GestureDetector(
+                            onTap: () => _showUserList('following', 'Following'),
+                            child: _buildStatCounter('following', 'Following'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      if (!isOwnProfile)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(_currentUid)
+                                    .collection('following')
+                                    .doc(widget.targetUid)
+                                    .snapshots(),
+                                builder: (context, followSnap) {
+                                  final isFollowing = followSnap.hasData && followSnap.data!.exists;
+
+                                  return ElevatedButton(
+                                    onPressed: () => _toggleFollow(isFollowing),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isFollowing ? Colors.grey.shade200 : const Color(0xFF1E3A8A),
+                                      foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                    child: Text(
+                                      isFollowing ? 'Following' : 'Follow',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatScreen(
+                                        peerUid: widget.targetUid,
+                                        peerName: fullName.isNotEmpty ? fullName : 'Star User',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFF1E3A8A)),
+                                  foregroundColor: const Color(0xFF1E3A8A),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                child: const Text(
+                                  'Message',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (education.isNotEmpty || hobbies.isNotEmpty || (isContactVisible && phone1.isNotEmpty))
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (education.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.school, size: 18, color: Color(0xFF1E3A8A)),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('અભ્યાસ: $education', style: const TextStyle(fontSize: 13.5))),
+                              ],
+                            ),
+                          ),
+                        if (hobbies.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.interests, size: 18, color: Color(0xFF1E3A8A)),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('શોખ: $hobbies', style: const TextStyle(fontSize: 13.5))),
+                              ],
+                            ),
+                          ),
+                        if (isContactVisible && phone1.isNotEmpty)
+                          Row(
+                            children: [
+                              const Icon(Icons.phone, size: 18, color: Colors.green),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text('સંપર્ક: $phone1', style: const TextStyle(fontSize: 13.5))),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.grid_on, size: 18, color: Color(0xFF1E3A8A)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Posts',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildUserPosts(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
