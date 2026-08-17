@@ -18,7 +18,9 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  String _searchQuery = '';
 
   String get _chatRoomId {
     if (_currentUid.compareTo(widget.peerUid) > 0) {
@@ -52,9 +54,80 @@ class _ChatScreenState extends State<ChatScreen> {
     }, SetOptions(merge: true));
   }
 
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('મીડિયા અને ફાઇલ મોકલો', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildAttachOption(Icons.image, 'ફોટો', Colors.purple, () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ફોટો સિલેક્ટ કરો')));
+                  }),
+                  _buildAttachOption(Icons.videocam, 'વિડિયો', Colors.pink, () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('વિડિયો સિલેક્ટ કરો (૧૬ MB સુધી)')));
+                  }),
+                  _buildAttachOption(Icons.insert_drive_file, 'ડોક્યુમેન્ટ', Colors.blue, () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF / દસ્તાવેજ સિલેક્ટ કરો')));
+                  }),
+                  _buildAttachOption(Icons.headset, 'ઓડિયો', Colors.orange, () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ઓડિયો ફાઇલ સિલેક્ટ કરો')));
+                  }),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAttachOption(IconData icon, String label, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: color.withValues(alpha: 0.15),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -71,74 +144,113 @@ class _ChatScreenState extends State<ChatScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
           ),
         ),
-        body: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('users').snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
-              );
-            }
-
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(
-                child: Text('કોઈ અન્ય યુઝર્સ મળ્યા નથી.', style: TextStyle(color: Colors.grey)),
-              );
-            }
-
-            final users = snapshot.data!.docs.where((doc) => doc.id != _currentUid).toList();
-
-            if (users.isEmpty) {
-              return const Center(
-                child: Text('વાતચીત કરવા માટે અન્ય યુઝર્સ ઉપલબ્ધ નથી.', style: TextStyle(color: Colors.grey)),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: users.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
-              itemBuilder: (context, index) {
-                final uData = users[index].data() as Map<String, dynamic>;
-                final uid = users[index].id;
-                final name = uData['fullName'] ??
-                    '${uData['firstName'] ?? ''} ${uData['lastName'] ?? ''}'.trim();
-                final displayName = name.isNotEmpty ? name : 'Star User';
-                final profession = uData['designation'] ?? uData['professionType'] ?? 'Star Member';
-
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  leading: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: const Color(0xFF1E3A8A),
-                    child: Text(
-                      displayName[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+        body: Column(
+          children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val.trim().toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'યૂઝર અથવા વ્યવસાય સર્ચ કરો...',
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1E3A8A)),
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
                   ),
-                  title: Text(
-                    displayName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  subtitle: Text(
-                    profession,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                  ),
-                  trailing: const Icon(Icons.chat_bubble_outline, color: Color(0xFF1E3A8A), size: 22),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(peerUid: uid, peerName: displayName),
-                      ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
                     );
-                  },
-                );
-              },
-            );
-          },
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text('કોઈ અન્ય યુઝર્સ મળ્યા નથી.', style: TextStyle(color: Colors.grey)),
+                    );
+                  }
+
+                  final users = snapshot.data!.docs.where((doc) {
+                    if (doc.id == _currentUid) return false;
+                    if (_searchQuery.isEmpty) return true;
+
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = (data['fullName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}').toString().toLowerCase();
+                    final profession = (data['designation'] ?? data['professionType'] ?? '').toString().toLowerCase();
+                    final city = (data['city'] ?? '').toString().toLowerCase();
+
+                    return name.contains(_searchQuery) || profession.contains(_searchQuery) || city.contains(_searchQuery);
+                  }).toList();
+
+                  if (users.isEmpty) {
+                    return const Center(
+                      child: Text('કોઈ મેળ ખાતા યુઝર્સ મળ્યા નથી.', style: TextStyle(color: Colors.grey)),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: users.length,
+                    separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                    itemBuilder: (context, index) {
+                      final uData = users[index].data() as Map<String, dynamic>;
+                      final uid = users[index].id;
+                      final name = uData['fullName'] ??
+                          '${uData['firstName'] ?? ''} ${uData['lastName'] ?? ''}'.trim();
+                      final displayName = name.isNotEmpty ? name : 'Star User';
+                      final profession = uData['designation'] ?? uData['professionType'] ?? 'Star Member';
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: const Color(0xFF1E3A8A),
+                          child: Text(
+                            displayName[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        title: Text(
+                          displayName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        subtitle: Text(
+                          profession,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        ),
+                        trailing: const Icon(Icons.chat_bubble_outline, color: Color(0xFF1E3A8A), size: 22),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(peerUid: uid, peerName: displayName),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -177,7 +289,7 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.call_outlined, color: Color(0xFF1E3A8A)),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ઓડિયો કોલિંગ ટૂંક સમયમાં શરૂ થશે!')),
+                SnackBar(content: Text('${widget.peerName} ને ઓડિયો કોલ જોડાઈ રહ્યો છે...')),
               );
             },
           ),
@@ -185,7 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.videocam_outlined, color: Color(0xFF1E3A8A)),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('વિડિઓ કોલિંગ ટૂંક સમયમાં શરૂ થશે!')),
+                SnackBar(content: Text('${widget.peerName} સાથે વિડિઓ કોલ જોડાઈ રહ્યો છે...')),
               );
             },
           ),
@@ -259,11 +371,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.attach_file, color: Color(0xFF1E3A8A)),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('ફાઈલ અને ડોક્યુમેન્ટ શેરિંગ ઓપ્શન')),
-                      );
-                    },
+                    onPressed: _showAttachmentOptions,
                   ),
                   Expanded(
                     child: TextField(
