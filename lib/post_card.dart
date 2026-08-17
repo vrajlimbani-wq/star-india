@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/user_profile_screen.dart';
@@ -23,13 +24,136 @@ class PostCard extends StatelessWidget {
     }
   }
 
-  void _showShareDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Star India પોસ્ટ લિંક કોપી થઈ ગઈ છે!'),
-        duration: Duration(seconds: 2),
-        backgroundColor: Color(0xFF1E3A8A),
+  void _showLikesBottomSheet(BuildContext context, List<dynamic> likes) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'લાઈક કરનાર યૂઝર્સ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Divider(),
+              Expanded(
+                child: likes.isEmpty
+                    ? const Center(child: Text('કોઈએ લાઈક કર્યું નથી.'))
+                    : ListView.builder(
+                        itemCount: likes.length,
+                        itemBuilder: (context, index) {
+                          final uid = likes[index].toString();
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+                            builder: (context, userSnap) {
+                              String name = 'Star User';
+                              String city = 'Star India';
+                              if (userSnap.hasData && userSnap.data!.exists) {
+                                final uData = userSnap.data!.data() as Map<String, dynamic>;
+                                name = uData['fullName'] ?? uData['name'] ?? 'Star User';
+                                city = uData['city'] ?? 'Star India';
+                              }
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: const Color(0xFF1E3A8A),
+                                  child: Text(
+                                    name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text(city),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UserProfileScreen(targetUid: uid),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showShareDialog(BuildContext context, String postId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Wrap(
+            children: [
+              const Center(
+                child: Text(
+                  'પોસ્ટ શેર કરો',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 30),
+              ListTile(
+                leading: const Icon(Icons.copy, color: Color(0xFF1E3A8A)),
+                title: const Text('લિંક કોપી કરો'),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: 'https://starindia.app/post/$postId'));
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Star India પોસ્ટ લિંક કોપી થઈ ગઈ છે!'),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Color(0xFF1E3A8A),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share, color: Colors.green),
+                title: const Text('અન્ય એપ્લિકેશન્સમાં શેર કરો (WhatsApp/Social)'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('શેરિંગ શરૂ થઈ રહ્યું છે...'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -96,6 +220,7 @@ class PostCard extends StatelessWidget {
                         itemCount: comments.length,
                         itemBuilder: (context, index) {
                           final cData = comments[index].data() as Map<String, dynamic>;
+                          final uUid = cData['userId'] ?? '';
                           final uName = cData['userName'] ?? 'User';
                           final text = cData['comment'] ?? '';
 
@@ -104,26 +229,53 @@ class PostCard extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: const Color(0xFF1E3A8A),
-                                  child: Text(uName.isNotEmpty ? uName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 12, color: Colors.white)),
+                                InkWell(
+                                  onTap: () {
+                                    if (uUid.isNotEmpty) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => UserProfileScreen(targetUid: uUid),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: const Color(0xFF1E3A8A),
+                                    child: Text(
+                                      uName.isNotEmpty ? uName[0].toUpperCase() : 'U',
+                                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(uName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                                        const SizedBox(height: 2),
-                                        Text(text, style: const TextStyle(fontSize: 13)),
-                                      ],
+                                  child: InkWell(
+                                    onTap: () {
+                                      if (uUid.isNotEmpty) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => UserProfileScreen(targetUid: uUid),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(uName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                                          const SizedBox(height: 2),
+                                          Text(text, style: const TextStyle(fontSize: 13)),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -266,26 +418,50 @@ class PostCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                TextButton.icon(
-                  onPressed: () => _toggleLike(context, postId, likes, currentUid),
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? Colors.red : Colors.grey.shade600,
-                    size: 20,
-                  ),
-                  label: Text(
-                    '${likes.length}',
-                    style: TextStyle(color: isLiked ? Colors.red : Colors.grey.shade600),
-                  ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        isLiked ? Icons.favorite : Icons.favorite_border,
+                        color: isLiked ? Colors.red : Colors.grey.shade600,
+                        size: 22,
+                      ),
+                      onPressed: () => _toggleLike(context, postId, likes, currentUid),
+                    ),
+                    GestureDetector(
+                      onTap: () => _showLikesBottomSheet(context, likes),
+                      child: Text(
+                        '${likes.length}',
+                        style: TextStyle(
+                          color: isLiked ? Colors.red : Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton.icon(
-                  onPressed: () => _openCommentBottomSheet(context, postId, currentUid, currentUserName),
-                  icon: Icon(Icons.mode_comment_outlined, color: Colors.grey.shade600, size: 20),
-                  label: Text('કમેન્ટ', style: TextStyle(color: Colors.grey.shade600)),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('posts')
+                      .doc(postId)
+                      .collection('comments')
+                      .snapshots(),
+                  builder: (context, cSnap) {
+                    final commentCount = cSnap.hasData ? cSnap.data!.docs.length : 0;
+                    return TextButton.icon(
+                      onPressed: () => _openCommentBottomSheet(context, postId, currentUid, currentUserName),
+                      icon: Icon(Icons.mode_comment_outlined, color: Colors.grey.shade600, size: 20),
+                      label: Text(
+                        '$commentCount કમેન્ટ',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    );
+                  },
                 ),
                 IconButton(
                   icon: Icon(Icons.share_outlined, color: Colors.grey.shade600, size: 20),
-                  onPressed: () => _showShareDialog(context),
+                  onPressed: () => _showShareDialog(context, postId),
                 ),
               ],
             ),
@@ -295,4 +471,3 @@ class PostCard extends StatelessWidget {
     );
   }
 }
-
