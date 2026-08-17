@@ -4,7 +4,11 @@ class ProfileSwitcherScreen extends StatelessWidget {
   final String activeProfile;
   final Function(String) onProfileChanged;
 
-  const ProfileSwitcherScreen({super.key, required this.activeProfile, required this.onProfileChanged});
+  const ProfileSwitcherScreen({
+    super.key,
+    required this.activeProfile,
+    required this.onProfileChanged,
+  });
 
   final List<Map<String, dynamic>> profileTypes = const [
     {'name': 'Personal', 'icon': Icons.person, 'desc': 'મિત્રો અને પરિવાર માટે'},
@@ -16,26 +20,58 @@ class ProfileSwitcherScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('પ્રોફાઇલ પસંદ કરો'), backgroundColor: Colors.indigo),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text(
+          'પ્રોફાઇલ પસંદ કરો',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E3A8A),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         itemCount: profileTypes.length,
-        separatorBuilder: (context, index) => const Divider(),
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final item = profileTypes[index];
           final isSelected = activeProfile == item['name'];
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: isSelected ? Colors.indigo : Colors.grey[300],
-              child: Icon(item['icon'], color: Colors.white),
+
+          return Card(
+            elevation: isSelected ? 2 : 0.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: isSelected ? const Color(0xFF1E3A8A) : Colors.grey.shade200,
+                width: isSelected ? 1.5 : 1.0,
+              ),
             ),
-            title: Text('${item['name']} Profile', style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(item['desc']),
-            trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.indigo) : null,
-            onTap: () {
-              onProfileChanged(item['name']);
-              Navigator.pop(context);
-            },
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              leading: CircleAvatar(
+                backgroundColor: isSelected ? const Color(0xFF1E3A8A) : Colors.grey.shade300,
+                child: Icon(
+                  item['icon'] as IconData,
+                  color: isSelected ? Colors.white : Colors.black54,
+                ),
+              ),
+              title: Text(
+                '${item['name']} Profile',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? const Color(0xFF1E3A8A) : Colors.black87,
+                ),
+              ),
+              subtitle: Text(item['desc'] as String),
+              trailing: isSelected
+                  ? const Icon(Icons.check_circle, color: Color(0xFF1E3A8A), size: 22)
+                  : const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              onTap: () {
+                onProfileChanged(item['name'] as String);
+                Navigator.pop(context);
+              },
+            ),
           );
         },
       ),
