@@ -4,7 +4,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/user_profile_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String? peerUid;
+  final String? peerName;
+
+  const ChatScreen({
+    super.key,
+    this.peerUid,
+    this.peerName,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -115,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
         }
 
         final filteredUsers = snapshot.data!.docs.where((doc) {
-          if (doc.id == _currentUid) return false; // પોતાનું નામ ન દેખાય
+          if (doc.id == _currentUid) return false;
           final data = doc.data() as Map<String, dynamic>;
           final name = (data['fullName'] ?? data['name'] ?? '').toString().toLowerCase();
           return name.contains(_searchQuery);
@@ -268,7 +275,6 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
     _msgController.clear();
     final now = FieldValue.serverTimestamp();
 
-    // ૧. ચેટ રૂમમાં મેસેજ ઉમેરો
     await FirebaseFirestore.instance
         .collection('chats')
         .doc(_chatRoomId)
@@ -279,7 +285,6 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
       'timestamp': now,
     });
 
-    // ૨. રિસન્ટ ચેટ લિસ્ટ માટે રૂમ અપડેટ કરો
     await FirebaseFirestore.instance.collection('chats').doc(_chatRoomId).set({
       'users': [_currentUid, widget.targetUid],
       'lastMessage': text,
