@@ -105,7 +105,6 @@ class _FeedScreenState extends State<FeedScreen> {
         SliverToBoxAdapter(
           child: Column(
             children: [
-              // સ્ટોરી બાર
               Container(
                 height: 105,
                 color: Colors.white,
@@ -121,7 +120,6 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              // ન્યૂ પોસ્ટ કાર્ડ
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -168,7 +166,6 @@ class _FeedScreenState extends State<FeedScreen> {
             ],
           ),
         ),
-        // ફીડ પોસ્ટ્સ
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
           builder: (context, snapshot) {
@@ -258,7 +255,7 @@ class _FeedScreenState extends State<FeedScreen> {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+              backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
               child: Icon(icon, color: const Color(0xFF1E3A8A), size: 26),
             ),
             const SizedBox(height: 4),
