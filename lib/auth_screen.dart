@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'main.dart';
+import 'feed_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,75 +11,140 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _formKey = GlobalKey<FormState>();
-  bool _isLogin = true;
-  bool _isLoading = false;
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
-
-  final TextEditingController _identifierController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _inputController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _professionController = TextEditingController();
 
-  String _formatEmail(String input) {
-    input = input.trim();
-    if (input.contains('@')) return input;
-    // ૧૦ આંકડાના મોબાઇલ નંબર માટે ઓટો-ઇમેલ ફોર્મેટ
-    return '$input@starindia.app';
-  }
+  bool _isSignUp = false;
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  String _selectedLanguage = 'en';
 
-  Future<void> _submitAuth() async {
-    if (!_formKey.currentState!.validate()) return;
+  final Map<String, Map<String, String>> _text = {
+    'en': {
+      'welcome': 'Welcome to Star India',
+      'sub': 'Select your preferred language',
+      'name': 'Full Name',
+      'emailOrPhone': 'Email or 10-digit Mobile',
+      'password': 'Password (min 6 chars)',
+      'confirmPassword': 'Confirm Password',
+      'login': 'Login',
+      'signup': 'Create Account',
+      'toggleToSignup': "Don't have an account? Sign Up",
+      'toggleToLogin': 'Already have an account? Login',
+      'fillAll': 'Please fill all fields properly',
+      'passMismatch': 'Passwords do not match',
+      'banned': 'Your account has been suspended by Admin.',
+    },
+    'gu': {
+      'welcome': 'સ્ટાર ઇન્ડિયા માં સ્વાગત છે',
+      'sub': 'તમારી પસંદગીની ભાષા પસંદ કરો',
+      'name': 'પૂરું નામ',
+      'emailOrPhone': 'ઇમેઇલ અથવા ૧૦ આંકડાનો મોબાઇલ',
+      'password': 'પાસવર્ડ (ઓછામાં ઓછા ૬ અક્ષર)',
+      'confirmPassword': 'પાસવર્ડ ફરી દાખલ કરો',
+      'login': 'લૉગિન કરો',
+      'signup': 'એકાઉન્ટ બનાવો',
+      'toggleToSignup': 'નવું એકાઉન્ટ બનાવવા માટે અહીં ક્લિક કરો',
+      'toggleToLogin': 'પહેલેથી એકાઉન્ટ છે? લૉગિન કરો',
+      'fillAll': 'કૃપા કરીને બધી વિગતો યોગ્ય રીતે ભરો',
+      'passMismatch': 'પાસવર્ડ સરખા નથી',
+      'banned': 'તમારું એકાઉન્ટ એડમિન દ્વારા સસ્પેન્ડ કરવામાં આવ્યું છે.',
+    },
+    'hi': {
+      'welcome': 'स्टार इंडिया में आपका स्वागत है',
+      'sub': 'अपनी पसंदीदा भाषा चुनें',
+      'name': 'पूरा नाम',
+      'emailOrPhone': 'ईमेल या १० अंकों का मोबाइल',
+      'password': 'पासवर्ड (कम से कम ६ अक्षर)',
+      'confirmPassword': 'पासवर्ड दोबारा दर्ज करें',
+      'login': 'लॉगिन करें',
+      'signup': 'खाता बनाएं',
+      'toggleToSignup': 'नया खाता बनाने के लिए यहाँ क्लिक करें',
+      'toggleToLogin': 'पहले से खाता है? लॉगिन करें',
+      'fillAll': 'कृपया सभी विवरण सही से भरें',
+      'passMismatch': 'पासवर्ड मेल नहीं खाते',
+      'banned': 'आपका खाता एडमिन द्वारा निलंबित कर दिया गया है।',
+    },
+  };
+
+  String _t(String key) => _text[_selectedLanguage]?[key] ?? _text['en']![key]!;
+
+  Future<void> _submit() async {
+    final input = _inputController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (input.isEmpty || password.isEmpty || (_isSignUp && (name.isEmpty || confirmPassword.isEmpty))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('fillAll')), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (_isSignUp && password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('passMismatch')), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
-    final email = _formatEmail(_identifierController.text);
-    final password = _passwordController.text.trim();
-
     try {
-      if (_isLogin) {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final email = input.contains('@') ? input : '$input@starindia.app';
+      UserCredential userCred;
+
+      if (_isSignUp) {
+        userCred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
+        final uid = userCred.user!.uid;
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'fullName': name,
+          'email': email,
+          'phone': input.contains('@') ? '' : input,
+          'language': _selectedLanguage,
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       } else {
-        final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
-        final uid = userCredential.user?.uid;
-        if (uid != null) {
-          await FirebaseFirestore.instance.collection('users').doc(uid).set({
-            'fullName': _nameController.text.trim(),
-            'email': email,
-            'city': _cityController.text.trim(),
-            'state': 'Gujarat',
-            'professionType': _professionController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        final uid = userCred.user!.uid;
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+        if (doc.exists && doc.data()?['status'] == 'banned') {
+          await FirebaseAuth.instance.signOut();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(_t('banned')), backgroundColor: Colors.red),
+            );
+          }
+          return;
         }
+
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'language': _selectedLanguage,
+        }, SetOptions(merge: true));
       }
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+          MaterialPageRoute(builder: (context) => const FeedScreen()),
         );
       }
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       if (mounted) {
-        String errorMsg = 'ભૂલ આવી: ${e.message}';
-        if (e.code == 'user-not-found') {
-          errorMsg = 'આ નંબર કે ઈમેલ પર કોઈ એકાઉન્ટ નથી.';
-        } else if (e.code == 'wrong-password') {
-          errorMsg = 'પાસવર્ડ ખોટો છે.';
-        } else if (e.code == 'email-already-in-use') {
-          errorMsg = 'આ એકાઉન્ટ પહેલેથી જ બનેલું છે. લૉગિન કરો.';
-        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -89,12 +154,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _nameController.dispose();
+    _inputController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _nameController.dispose();
-    _cityController.dispose();
-    _professionController.dispose();
     super.dispose();
   }
 
@@ -102,125 +165,145 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.star_rounded, size: 70, color: Color(0xFF1E3A8A)),
-                  const SizedBox(height: 10),
-                  Text(
-                    _isLogin ? 'Star India માં લૉગિન' : 'Star India નવું એકાઉન્ટ',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E3A8A),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (!_isLogin) ...[
-                    _buildTextField(_nameController, 'પૂરું નામ (Full Name)', Icons.person_outline),
-                    _buildTextField(_cityController, 'શહેર (City)', Icons.location_city_outlined),
-                    _buildTextField(_professionController, 'વ્યવસાય / પદ (Profession)', Icons.work_outline),
-                  ],
-                  _buildTextField(
-                    _identifierController,
-                    '૧૦ આંકડાનો મોબાઇલ નંબર અથવા ઈમેલ',
-                    Icons.account_circle_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: 'પાસવર્ડ (ઓછામાં ઓછા ૬ અક્ષર)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                      ),
-                    ),
-                    validator: (val) => (val == null || val.length < 6) ? 'પાસવર્ડ ઓછામાં ઓછો ૬ અક્ષરનો હોવો જોઈએ' : null,
-                  ),
-                  if (!_isLogin) ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: !_isConfirmPasswordVisible,
-                      decoration: InputDecoration(
-                        labelText: 'પાસવર્ડ કન્ફર્મ કરો',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
-                        ),
-                      ),
-                      validator: (val) => val != _passwordController.text ? 'પાસવર્ડ સરખા નથી' : null,
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitAuth,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : Text(
-                              _isLogin ? 'Login' : 'Sign Up',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () => setState(() => _isLogin = !_isLogin),
-                    child: Text(
-                      _isLogin ? 'નવું એકાઉન્ટ બનાવો (Create Account)' : 'પહેલેથી એકાઉન્ટ છે? લૉગિન કરો',
-                      style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
-                    ),
-                  ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 16, top: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedLanguage,
+                icon: const Icon(Icons.language, color: Color(0xFF1E3A8A), size: 18),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedLanguage = val);
+                },
+                items: const [
+                  DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  DropdownMenuItem(value: 'gu', child: Text('ગુજરાતી', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  DropdownMenuItem(value: 'hi', child: Text('हिन्दी', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
                 ],
               ),
             ),
+          )
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircleAvatar(
+                  radius: 36,
+                  backgroundColor: Color(0xFF1E3A8A),
+                  child: Icon(Icons.star, color: Colors.white, size: 40),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _t('welcome'),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+                ),
+                const SizedBox(height: 4),
+                Text(_t('sub'), style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                const SizedBox(height: 24),
+
+                if (_isSignUp) ...[
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: _t('name'),
+                      prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF1E3A8A)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                TextField(
+                  controller: _inputController,
+                  decoration: InputDecoration(
+                    labelText: _t('emailOrPhone'),
+                    prefixIcon: const Icon(Icons.account_circle_outlined, color: Color(0xFF1E3A8A)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: _t('password'),
+                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF1E3A8A)),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                if (_isSignUp) ...[
+                  TextField(
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    decoration: InputDecoration(
+                      labelText: _t('confirmPassword'),
+                      prefixIcon: const Icon(Icons.lock_reset, color: Color(0xFF1E3A8A)),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                        onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E3A8A),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _isLoading ? null : _submit,
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            _isSignUp ? _t('signup') : _t('login'),
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                TextButton(
+                  onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                  child: Text(
+                    _isSignUp ? _t('toggleToLogin') : _t('toggleToSignup'),
+                    style: const TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          prefixIcon: Icon(icon),
-        ),
-        validator: (val) => (val == null || val.trim().isEmpty) ? 'આ વિગત ભરવી જરૂરી છે' : null,
       ),
     );
   }
