@@ -56,19 +56,28 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+  Widget _getSelectedBody() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildHomeFeed();
+      case 1:
+        return const ReelsScreen();
+      case 2:
+        return const ExploreScreen();
+      case 3:
+        return const ChatScreen();
+      case 4:
+        return const ProfileScreen();
+      default:
+        return _buildHomeFeed();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      _buildHomeFeed(),
-      const ReelsScreen(),
-      const ExploreScreen(),
-      const ChatScreen(),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(child: screens[_currentIndex]),
+      body: SafeArea(child: _getSelectedBody()),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: const Color(0xFF1E3A8A),
