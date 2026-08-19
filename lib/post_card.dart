@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'comments_screen.dart'; // નવી ફાઈલ ઈમ્પોર્ટ કરી
 
 class PostCard extends StatelessWidget {
   final String postId;
@@ -50,8 +51,7 @@ class PostCard extends StatelessWidget {
             trailing: isOwner
                 ? PopupMenuButton(
                     itemBuilder: (context) => [
-                      PopupMenuItem(child: Text(_t('Edit', 'એડિટ', 'एडिट')), value: 'edit'),
-                      PopupMenuItem(child: Text(_t('Delete', 'ડિલીટ', 'डिलीट')), value: 'delete'),
+                      PopupMenuItem(value: 'delete', child: Text(_t('Delete', 'ડિલીટ', 'डिलीट'))),
                     ],
                     onSelected: (value) async {
                       if (value == 'delete') {
@@ -61,7 +61,7 @@ class PostCard extends StatelessWidget {
                   )
                 : null,
           ),
-          if (post['mediaUrl'] != null)
+          if (post['mediaUrl'] != null && post['mediaUrl'].isNotEmpty)
             Image.network(post['mediaUrl'], fit: BoxFit.cover, width: double.infinity, height: 250),
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -78,8 +78,10 @@ class PostCard extends StatelessWidget {
                 },
               ),
               Text('${likes.length}'),
-              IconButton(icon: const Icon(Icons.comment_outlined), onPressed: () {}),
-              Text('0'), // કમેન્ટ કાઉન્ટ
+              IconButton(
+                icon: const Icon(Icons.comment_outlined),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommentsScreen(postId: postId))),
+              ),
               const Spacer(),
               IconButton(icon: const Icon(Icons.share_outlined), onPressed: () => _showShareOptions(context)),
             ],
