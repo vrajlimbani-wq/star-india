@@ -5,29 +5,16 @@ import 'feed_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // જો કોઈ એરર આવે તો તેની ચોક્કસ વિગત સ્ક્રીન પર દેખાશે
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Text(
-              'Error: ${details.exceptionAsString()}',
-              style: const TextStyle(color: Colors.red, fontSize: 13),
-            ),
-          ),
-        ),
-      ),
-    );
-  };
-
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint("Firebase initialization error: $e");
-  }
+  // તમારા Firebase પ્રોજેક્ટની ડાયરેક્ટ વિગતો (ક્યારેય ક્રેશ નહીં થાય)
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: 'AIzaSyAFWVCmLEW-3vmjQys5p4yj3JkjJJho2Cc',
+      appId: '1:219020282945:android:82be9457eb99719125cac0',
+      messagingSenderId: '219020282945',
+      projectId: 'star-india-a377f',
+      storageBucket: 'star-india-a377f.firebasestorage.app',
+    ),
+  );
 
   runApp(const StarIndiaApp());
 }
@@ -37,14 +24,10 @@ class StarIndiaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Star India',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFF1E3A8A),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const FeedScreen(),
+      home: FeedScreen(),
     );
   }
 }
