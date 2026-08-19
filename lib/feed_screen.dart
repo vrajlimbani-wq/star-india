@@ -58,7 +58,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
+    final List<Widget> screens = [
       _buildHomeFeed(),
       const ReelsScreen(),
       const ExploreScreen(),
@@ -68,7 +68,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: screens[_currentIndex],
+      body: SafeArea(child: screens[_currentIndex]),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: const Color(0xFF1E3A8A),
@@ -87,186 +87,198 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildHomeFeed() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        final hasData = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-        final posts = hasData ? snapshot.data!.docs : [];
-
-        return CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              backgroundColor: const Color(0xFF1E3A8A),
-              title: const Text('Star India', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.add_box_outlined, color: Colors.white),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded, color: Colors.white),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ChatScreen()),
-                  ),
-                ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Column(
+    return Column(
+      children: [
+        // ટોપ હેડર
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          color: const Color(0xFF1E3A8A),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Star India', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
+              Row(
                 children: [
-                  // સ્ટોરીઝ લિસ્ટ
-                  Container(
-                    height: 105,
-                    color: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _buildStoryItem(Icons.person_add, _t('Your Story', 'તમારી સ્ટોરી'), true),
-                        _buildStoryItem(Icons.videocam, _t('Star Live', 'સ્ટાર લાઈવ'), false, onTap: _openLiveDialog),
-                        _buildStoryItem(Icons.campaign, _t('Star News', 'સ્ટાર ન્યૂઝ'), false),
-                        _buildStoryItem(Icons.local_fire_department, _t('Trending', 'ટ્રેન્ડિંગ'), false),
-                      ],
+                  IconButton(
+                    icon: const Icon(Icons.add_box_outlined, color: Colors.white),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // પોસ્ટ ક્રિએટ બોક્સ
-                  Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        children: [
-                          InkWell(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
-                            ),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.person, color: Colors.white)),
-                                const SizedBox(width: 12),
-                                Text(_t('Share your thoughts or update...', 'તમારા વિચારો પોસ્ટ કરો...'), style: const TextStyle(color: Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          const Divider(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              TextButton.icon(
-                                icon: const Icon(Icons.image, color: Colors.green),
-                                label: Text(_t('Photo', 'ફોટો'), style: const TextStyle(color: Colors.black87)),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
-                                ),
-                              ),
-                              TextButton.icon(
-                                icon: const Icon(Icons.videocam, color: Colors.red),
-                                label: Text(_t('Video', 'વિડિઓ'), style: const TextStyle(color: Colors.black87)),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'video', userLanguage: _userLanguage)),
-                                ),
-                              ),
-                              TextButton.icon(
-                                icon: const Icon(Icons.stream, color: Colors.orange),
-                                label: Text(_t('Live', 'લાઈવ'), style: const TextStyle(color: Colors.black87)),
-                                onPressed: _openLiveDialog,
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
+                  IconButton(
+                    icon: const Icon(Icons.send_rounded, color: Colors.white),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChatScreen()),
                     ),
                   ),
-                  const SizedBox(height: 4),
                 ],
-              ),
-            ),
-            if (snapshot.connectionState == ConnectionState.waiting)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(30),
-                  child: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
-                ),
               )
-            else if (!hasData)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Center(child: Text(_t('No posts available yet.', 'કોઈ પોસ્ટ્સ ઉપલબ્ધ નથી.'))),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final data = posts[index].data() as Map<String, dynamic>;
-                    final name = data['authorName'] ?? 'Star User';
-                    final text = data['text'] ?? '';
-                    final mediaUrl = data['mediaUrl'] ?? '';
-                    final likes = List<dynamic>.from(data['likes'] ?? []);
+            ],
+          ),
+        ),
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+        // મુખ્ય સ્ક્રોલ ફીડ
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // સ્ટોરીઝ લિસ્ટ
+              Container(
+                height: 100,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildStoryItem(Icons.person_add, _t('Your Story', 'તમારી સ્ટોરી'), true),
+                    _buildStoryItem(Icons.videocam, _t('Star Live', 'સ્ટાર લાઈવ'), false, onTap: _openLiveDialog),
+                    _buildStoryItem(Icons.campaign, _t('Star News', 'સ્ટાર ન્યૂઝ'), false),
+                    _buildStoryItem(Icons.local_fire_department, _t('Trending', 'ટ્રેન્ડિંગ'), false),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // પોસ્ટ ક્રિએટ કાર્ડ
+              Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
+                        ),
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: const Color(0xFF1E3A8A),
-                                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white)),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              ],
-                            ),
-                            if (text.isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              Text(text, style: const TextStyle(fontSize: 14)),
-                            ],
-                            if (mediaUrl.isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(mediaUrl, fit: BoxFit.cover, errorBuilder: (ctx, _, __) => const SizedBox()),
-                              ),
-                            ],
-                            const Divider(height: 20),
-                            Row(
-                              children: [
-                                Icon(Icons.favorite, color: likes.contains(_currentUid) ? Colors.red : Colors.grey, size: 20),
-                                const SizedBox(width: 4),
-                                Text('${likes.length}'),
-                                const SizedBox(width: 20),
-                                const Icon(Icons.chat_bubble_outline, color: Colors.grey, size: 20),
-                                const SizedBox(width: 4),
-                                Text(_t('0 Comments', '0 કમેન્ટ')),
-                              ],
-                            )
+                            const CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.person, color: Colors.white)),
+                            const SizedBox(width: 12),
+                            Text(_t('Share your thoughts or update...', 'તમારા વિચારો પોસ્ટ કરો...'), style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                       ),
-                    );
-                  },
-                  childCount: posts.length,
+                      const Divider(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          TextButton.icon(
+                            icon: const Icon(Icons.image, color: Colors.green),
+                            label: Text(_t('Photo', 'ફોટો'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage)),
+                            ),
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.videocam, color: Colors.red),
+                            label: Text(_t('Video', 'વિડિઓ'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'video', userLanguage: _userLanguage)),
+                            ),
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.stream, color: Colors.orange),
+                            label: Text(_t('Live', 'લાઈવ'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: _openLiveDialog,
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
-          ],
-        );
-      },
+              const SizedBox(height: 4),
+
+              // પોસ્ટ લિસ્ટ Stream
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(30),
+                      child: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Center(child: Text(_t('No posts available yet.', 'કોઈ પોસ્ટ્સ ઉપલબ્ધ નથી.'))),
+                    );
+                  }
+
+                  final posts = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final data = posts[index].data() as Map<String, dynamic>;
+                      final name = data['authorName'] ?? 'Star User';
+                      final text = data['text'] ?? '';
+                      final mediaUrl = data['mediaUrl'] ?? '';
+                      final likes = List<dynamic>.from(data['likes'] ?? []);
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: const Color(0xFF1E3A8A),
+                                    child: Text(name.isNotEmpty ? name[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white)),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                ],
+                              ),
+                              if (text.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Text(text, style: const TextStyle(fontSize: 14)),
+                              ],
+                              if (mediaUrl.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(mediaUrl, fit: BoxFit.cover, errorBuilder: (ctx, _, __) => const SizedBox()),
+                                ),
+                              ],
+                              const Divider(height: 20),
+                              Row(
+                                children: [
+                                  Icon(Icons.favorite, color: likes.contains(_currentUid) ? Colors.red : Colors.grey, size: 20),
+                                  const SizedBox(width: 4),
+                                  Text('${likes.length}'),
+                                  const SizedBox(width: 20),
+                                  const Icon(Icons.chat_bubble_outline, color: Colors.grey, size: 20),
+                                  const SizedBox(width: 4),
+                                  Text(_t('0 Comments', '0 કમેન્ટ')),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
