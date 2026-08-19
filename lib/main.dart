@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'login_screen.dart';
 import 'feed_screen.dart';
 
 void main() async {
@@ -22,21 +21,27 @@ class StarIndiaApp extends StatelessWidget {
         primaryColor: const Color(0xFF1E3A8A),
         scaffoldBackgroundColor: Colors.white,
       ),
-      // ઓટો-લૉગિન ચેક
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
-            );
-          }
-          if (snapshot.hasData && snapshot.data != null) {
-            return const FeedScreen();
-          }
-          return const LoginScreen();
-        },
-      ),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator(color: Color(0xFF1E3A8A))),
+          );
+        }
+        // જો લૉગિન થયેલું હોય તો સીધું FeedScreen પર જશે
+        return const FeedScreen();
+      },
     );
   }
 }
