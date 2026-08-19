@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'feed_screen.dart';
-import 'login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -130,20 +128,6 @@ class _AppInitializerState extends State<AppInitializer> {
       );
     }
 
-    // યુઝર લોગઇન છે કે નહિ તે ચેક કરશે
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasData && snapshot.data != null) {
-          return const FeedScreen();
-        }
-        return const LoginScreen();
-      },
-    );
+    return const FeedScreen();
   }
 }
