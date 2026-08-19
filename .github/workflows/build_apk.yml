@@ -15,7 +15,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Flutter
@@ -23,6 +23,10 @@ jobs:
         with:
           flutter-version: '3.19.6'
           channel: 'stable'
+
+      - name: Recreate clean Android platform
+        run: |
+          flutter create . --org com.example --project-name star_india --platforms android
 
       - name: Get Dependencies
         run: flutter pub get
