@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'create_post_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'reels_screen.dart';
+import 'explore_screen.dart';
 import 'chat_screen.dart';
-import 'post_card.dart';
+import 'profile_screen.dart';
+import 'create_post_screen.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -13,273 +15,254 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  String _userState = 'Gujarat';
+  int _currentIndex = 0;
+  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  String _userLanguage = 'en';
 
   @override
   void initState() {
     super.initState();
-    _fetchUserState();
+    _fetchLanguage();
   }
 
-  Future<void> _fetchUserState() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        if (data['state'] != null && data['state'].toString().trim().isNotEmpty) {
-          if (mounted) {
-            setState(() {
-              _userState = data['state'].toString().trim();
-            });
-          }
-        }
-      }
+  Future<void> _fetchLanguage() async {
+    if (_currentUid.isEmpty) return;
+    final doc = await FirebaseFirestore.instance.collection('users').doc(_currentUid).get();
+    if (doc.exists && mounted) {
+      final data = doc.data() as Map<String, dynamic>;
+      setState(() {
+        _userLanguage = data['language'] ?? 'en';
+      });
     }
   }
 
-  void _openCreatePost() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CreatePostScreen()),
-    );
-  }
+  String _t(String en, String gu) => _userLanguage == 'gu' ? gu : en;
 
-  void _showStoryDetails(String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$title વિભાગ શરૂ થઈ રહ્યો છે...'),
-        duration: const Duration(seconds: 1),
-        backgroundColor: const Color(0xFF1E3A8A),
+  void _openLiveDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_t('Star Live', 'સ્ટાર લાઈવ')),
+        content: Text(_t('Live streaming feature is launching soon!', 'લાઈવ સ્ટ્રીમિંગ સુવિધા ટૂંક સમયમાં શરૂ થઈ રહી છે!')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(_t('OK', 'ઠીક છે')),
+          )
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> stories = [
-      {'title': 'Your Story', 'icon': Icons.person, 'isUser': true, 'color': Colors.grey},
-      {'title': 'Star Live', 'icon': Icons.videocam, 'isUser': false, 'color': const Color(0xFFE11D48)},
-      {'title': 'Star News', 'icon': Icons.campaign, 'isUser': false, 'color': const Color(0xFF0284C7)},
-      {'title': 'Trending', 'icon': Icons.local_fire_department, 'isUser': false, 'color': const Color(0xFFEA580C)},
-      {'title': _userState, 'icon': Icons.location_on, 'isUser': false, 'color': const Color(0xFF16A34A)},
-      {'title': 'Tech', 'icon': Icons.laptop_mac, 'isUser': false, 'color': const Color(0xFF9333EA)},
+    final screens = [
+      _buildHomeFeed(),
+      const ReelsScreen(),
+      const ExploreScreen(),
+      const ChatScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
-        elevation: 0,
-        title: const Text(
-          'Star India',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: 0.5,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined, color: Colors.white, size: 26),
-            onPressed: _openCreatePost,
-          ),
-          IconButton(
-            icon: const Icon(Icons.send_rounded, color: Colors.white, size: 24),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ChatScreen(peerUid: '', peerName: 'Star Messages'),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: const Color(0xFF1E3A8A),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: _t('Feed', 'ફીડ')),
+          BottomNavigationBarItem(icon: const Icon(Icons.play_arrow), label: _t('Reels', 'રીલ્સ')),
+          BottomNavigationBarItem(icon: const Icon(Icons.explore), label: _t('Explore', 'એક્સપ્લોર')),
+          BottomNavigationBarItem(icon: const Icon(Icons.chat), label: _t('Chats', 'ચેટ્સ')),
+          BottomNavigationBarItem(icon: const Icon(Icons.person), label: _t('Profile', 'પ્રોફાઇલ')),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _fetchUserState();
-          setState(() {});
-        },
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: SizedBox(
-                height: 94,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  itemCount: stories.length,
-                  itemBuilder: (context, index) {
-                    final story = stories[index];
-                    final isUser = story['isUser'] as bool;
-                    final color = story['color'] as Color;
+    );
+  }
 
-                    return GestureDetector(
-                      onTap: () => _showStoryDetails(story['title'] as String),
-                      child: Container(
-                        width: 72,
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isUser ? Colors.grey.shade300 : color,
-                                      width: 2.5,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2.5),
-                                    child: CircleAvatar(
-                                      backgroundColor: color.withOpacity(0.15),
-                                      child: Icon(story['icon'] as IconData, color: color, size: 26),
-                                    ),
-                                  ),
-                                ),
-                                if (isUser)
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF0284C7),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      padding: const EdgeInsets.all(3),
-                                      child: const Icon(Icons.add, size: 12, color: Colors.white),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              story['title'] as String,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+  Widget _buildHomeFeed() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          floating: true,
+          backgroundColor: const Color(0xFF1E3A8A),
+          title: const Text('Star India', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add_box_outlined, color: Colors.white),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage))),
+            ),
+            IconButton(
+              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatScreen())),
+            ),
+          ],
+        ),
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              // સ્ટોરી બાર
+              Container(
+                height: 105,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildStoryItem(Icons.person_add, _t('Your Story', 'તમારી સ્ટોરી'), true),
+                    _buildStoryItem(Icons.videocam, _t('Star Live', 'સ્ટાર લાઈવ'), false, onTap: _openLiveDialog),
+                    _buildStoryItem(Icons.campaign, _t('Star News', 'સ્ટાર ન્યૂઝ'), false),
+                    _buildStoryItem(Icons.local_fire_department, _t('Trending', 'ટ્રેન્ડિંગ'), false),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                color: Colors.white,
+              const SizedBox(height: 8),
+              // ન્યૂ પોસ્ટ કાર્ડ
+              Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
                       InkWell(
-                        onTap: _openCreatePost,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage))),
                         child: Row(
                           children: [
-                            const CircleAvatar(
-                              radius: 18,
-                              backgroundColor: Color(0xFF1E3A8A),
-                              child: Icon(Icons.person, color: Colors.white, size: 20),
-                            ),
+                            const CircleAvatar(backgroundColor: Color(0xFF1E3A8A), child: Icon(Icons.person, color: Colors.white)),
                             const SizedBox(width: 12),
-                            Text(
-                              'તમારા વિચારો પોસ્ટ કરો (Post / Share)...',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13.5),
-                            ),
+                            Text(_t('Share your thoughts or update...', 'તમારા વિચારો પોસ્ટ કરો...'), style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      const Divider(height: 1),
-                      const SizedBox(height: 6),
+                      const Divider(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           TextButton.icon(
-                            onPressed: _openCreatePost,
-                            icon: const Icon(Icons.photo_library, color: Colors.green, size: 18),
-                            label: const Text('ફોટો', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                            icon: const Icon(Icons.image, color: Colors.green),
+                            label: Text(_t('Photo', 'ફોટો'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage))),
                           ),
                           TextButton.icon(
-                            onPressed: _openCreatePost,
-                            icon: const Icon(Icons.videocam, color: Colors.red, size: 18),
-                            label: const Text('વિડિયો', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                            icon: const Icon(Icons.videocam, color: Colors.red),
+                            label: Text(_t('Video', 'વિડિઓ'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen(initialType: 'video', userLanguage: _userLanguage))),
                           ),
                           TextButton.icon(
-                            onPressed: () => _showStoryDetails('Star Live'),
-                            icon: const Icon(Icons.stream, color: Colors.orange, size: 18),
-                            label: const Text('લાઈવ', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                            icon: const Icon(Icons.stream, color: Colors.orange),
+                            label: Text(_t('Live', 'લાઈવ'), style: const TextStyle(color: Colors.black87)),
+                            onPressed: _openLiveDialog,
                           ),
                         ],
-                      ),
+                      )
                     ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('posts')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
-                    ),
-                  );
-                }
+              const SizedBox(height: 4),
+            ],
+          ),
+        ),
+        // ફીડ પોસ્ટ્સ
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())));
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Center(child: Text(_t('No posts available yet.', 'કોઈ પોસ્ટ્સ ઉપલબ્ધ નથી.'))),
+                ),
+              );
+            }
+            final posts = snapshot.data!.docs;
+            return SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final data = posts[index].data() as Map<String, dynamic>;
+                  final name = data['authorName'] ?? 'Star User';
+                  final text = data['text'] ?? '';
+                  final mediaUrl = data['mediaUrl'] ?? '';
+                  final likes = List<dynamic>.from(data['likes'] ?? []);
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Center(
-                      child: Text(
-                        'હજુ કોઈ નવી પોસ્ટ નથી. પ્રથમ પોસ્ટ તમે શેર કરો!',
-                        style: TextStyle(color: Colors.grey),
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: const Color(0xFF1E3A8A),
+                                child: Text(name.isNotEmpty ? name[0].toUpperCase() : 'U', style: const TextStyle(color: Colors.white)),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ],
+                          ),
+                          if (text.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(text, style: const TextStyle(fontSize: 14)),
+                          ],
+                          if (mediaUrl.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(mediaUrl, fit: BoxFit.cover, errorBuilder: (ctx, _, __) => const SizedBox()),
+                            ),
+                          ],
+                          const Divider(height: 20),
+                          Row(
+                            children: [
+                              Icon(Icons.favorite, color: likes.contains(_currentUid) ? Colors.red : Colors.grey, size: 20),
+                              const SizedBox(width: 4),
+                              Text('${likes.length}'),
+                              const SizedBox(width: 20),
+                              const Icon(Icons.chat_bubble_outline, color: Colors.grey, size: 20),
+                              const SizedBox(width: 4),
+                              Text(_t('0 Comments', '0 કમેન્ટ')),
+                            ],
+                          )
+                        ],
                       ),
                     ),
                   );
-                }
+                },
+                childCount: posts.length,
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
 
-                final posts = snapshot.data!.docs;
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) {
-                    return PostCard(post: posts[index]);
-                  },
-                );
-              },
+  Widget _buildStoryItem(IconData icon, String label, bool isAdd, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 75,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+              child: Icon(icon, color: const Color(0xFF1E3A8A), size: 26),
             ),
+            const SizedBox(height: 4),
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
           ],
         ),
       ),
