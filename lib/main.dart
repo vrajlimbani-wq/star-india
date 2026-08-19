@@ -44,7 +44,15 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _initFirebase() async {
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyAfWVCmLEW-3vmjQys5p4yj3JkjjJho2Cc',
+          appId: '1:219020282945:android:82be9457eb99719125cac0',
+          messagingSenderId: '219020282945',
+          projectId: 'star-india-a377f',
+          storageBucket: 'star-india-a377f.firebasestorage.app',
+        ),
+      );
       if (mounted) {
         setState(() => _initialized = true);
       }
@@ -57,7 +65,6 @@ class _AppInitializerState extends State<AppInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    // જો Firebase માં ભૂલ આવે તો એરર બતાવશે, સફેદ સ્ક્રીન નહીં રહે
     if (_error != null) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -97,7 +104,6 @@ class _AppInitializerState extends State<AppInitializer> {
       );
     }
 
-    // જ્યારે લોડ થતું હોય ત્યારે સ્ટાર ઇન્ડિયાનો લોગો અને લોડર દેખાશે
     if (!_initialized) {
       return const Scaffold(
         backgroundColor: Color(0xFF1E3A8A),
@@ -122,7 +128,6 @@ class _AppInitializerState extends State<AppInitializer> {
       );
     }
 
-    // લોડ થઈ ગયા પછી સીધું મુખ્ય ફીડ ખૂલશે
     return const FeedScreen();
   }
 }
