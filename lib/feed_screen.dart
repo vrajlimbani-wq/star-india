@@ -6,8 +6,7 @@ import 'explore_screen.dart';
 import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'create_post_screen.dart';
-import 'story_view_screen.dart';
-import 'post_card.dart'; // આ લાઈનથી આપણે નવું PostCard વાપરી શકીશું
+import 'post_card.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -19,7 +18,6 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   late PageController _pageController;
   int _currentIndex = 0;
-  final String _currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
   String _userLanguage = 'en';
 
   @override
@@ -29,14 +27,22 @@ class _FeedScreenState extends State<FeedScreen> {
     _fetchUserData();
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists && mounted) {
-        setState(() => _userLanguage = doc.data()?['language'] ?? 'en');
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists && mounted) {
+          setState(() => _userLanguage = doc.data()?['language'] ?? 'en');
+        }
       }
-    }
+    } catch (_) {}
   }
 
   String _t(String en, String gu, String hi) {
@@ -65,7 +71,11 @@ class _FeedScreenState extends State<FeedScreen> {
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
         },
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.home), label: _t('Feed', 'ફીડ', 'फ़ीड')),
@@ -82,34 +92,87 @@ class _FeedScreenState extends State<FeedScreen> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 40, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 40, 16, 12),
           color: const Color(0xFF1E3A8A),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Star India', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Star India',
+                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+              ),
               IconButton(
-                icon: const Icon(Icons.add_box_outlined, color: Colors.white),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CreatePostScreen(initialType: 'photo', userLanguage: _userLanguage))),
+                icon: const Icon(Icons.add_box_outlined, color: Colors.white, size: 26),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreatePostScreen(
+                        initialType: 'photo',
+                        userLanguage: _userLanguage,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
+            stream: FirebaseFirestore.instance.collection('posts').snapshots(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-              return ListView.builder(
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (context, index) {
-                  final doc = snapshot.data!.docs[index];
-                  return PostCard(
-                    postId: doc.id,
-                    post: doc.data() as Map<String, dynamic>,
-                    userLanguage: _userLanguage,
-                  );
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(
+                      _t('Error loading posts', 'પોસ્ટ લોડ કરવામાં ભૂલ આવી', 'पोस्ट लोड करने में त्रुटि'),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.post_add, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 12),
+                      Text(
+                        _t('No posts yet! Tap + to create one.', 'હજી કોઈ પોસ્ટ નથી! નવી પોસ્ટ કરવા + દબાવો.', 'अभी कोई पोस्ट नहीं है! नई पोस्ट के लिए + दबाएं।'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final docs = snapshot.data!.docs;
+              return RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {});
                 },
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>? ?? {};
+                    return PostCard(
+                      postId: doc.id,
+                      post: data,
+                      userLanguage: _userLanguage,
+                    );
+                  },
+                ),
               );
             },
           ),
