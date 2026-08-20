@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'feed_screen.dart';
+import 'auth_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,8 +19,17 @@ class StarIndiaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF1E3A8A),
-        appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF1E3A8A)),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1E3A8A),
+          elevation: 0,
+          centerTitle: false,
+        ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1E3A8A),
+          primary: const Color(0xFF1E3A8A),
+        ),
+        useMaterial3: false,
       ),
       home: const AppInitializer(),
     );
@@ -88,6 +99,7 @@ class _AppInitializerState extends State<AppInitializer> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
                   onPressed: () {
                     setState(() {
                       _error = null;
@@ -111,6 +123,12 @@ class _AppInitializerState extends State<AppInitializer> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.white24,
+                child: Icon(Icons.star, color: Colors.white, size: 46),
+              ),
+              SizedBox(height: 18),
               Text(
                 'Star India',
                 style: TextStyle(
@@ -120,14 +138,30 @@ class _AppInitializerState extends State<AppInitializer> {
                   letterSpacing: 1.2,
                 ),
               ),
-              SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
+              SizedBox(height: 24),
+              CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
             ],
           ),
         ),
       );
     }
 
-    return const FeedScreen();
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF1E3A8A),
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        }
+
+        if (snapshot.hasData && snapshot.data != null) {
+          return const FeedScreen();
+        }
+
+        return const AuthScreen();
+      },
+    );
   }
 }
