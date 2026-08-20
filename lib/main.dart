@@ -57,7 +57,7 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
-          apiKey: 'AIzaSyB1m86k2xMvr1rP2VXVTozb7cwn3T8bNd8',
+          apiKey: 'AIzaSyAFWVCmLEW-3vmjQys5p4yj3JkjJJho2Cc',
           appId: '1:219020282945:android:82be9457eb99719125cac0',
           messagingSenderId: '219020282945',
           projectId: 'star-india-a377f',
