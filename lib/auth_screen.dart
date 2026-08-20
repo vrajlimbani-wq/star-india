@@ -20,7 +20,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _selectedLanguage = 'en';
+  String _selectedLanguage = 'gu';
 
   final Map<String, Map<String, String>> _text = {
     'en': {
@@ -36,6 +36,7 @@ class _AuthScreenState extends State<AuthScreen> {
       'toggleToLogin': 'Already have an account? Login',
       'fillAll': 'Please fill all fields properly',
       'passMismatch': 'Passwords do not match',
+      'passShort': 'Password must be at least 6 characters',
       'banned': 'Your account has been suspended by Admin.',
     },
     'gu': {
@@ -51,6 +52,7 @@ class _AuthScreenState extends State<AuthScreen> {
       'toggleToLogin': 'પહેલેથી એકાઉન્ટ છે? લૉગિન કરો',
       'fillAll': 'કૃપા કરીને બધી વિગતો યોગ્ય રીતે ભરો',
       'passMismatch': 'પાસવર્ડ સરખા નથી',
+      'passShort': 'પાસવર્ડ ઓછામાં ઓછો ૬ અક્ષરનો હોવો જોઈએ',
       'banned': 'તમારું એકાઉન્ટ એડમિન દ્વારા સસ્પેન્ડ કરવામાં આવ્યું છે.',
     },
     'hi': {
@@ -66,6 +68,7 @@ class _AuthScreenState extends State<AuthScreen> {
       'toggleToLogin': 'पहले से खाता है? लॉगिन करें',
       'fillAll': 'कृपया सभी विवरण सही से भरें',
       'passMismatch': 'पासवर्ड मेल नहीं खाते',
+      'passShort': 'पासवर्ड कम से कम ६ अक्षरों का होना चाहिए',
       'banned': 'आपका खाता एडमिन द्वारा निलंबित कर दिया गया है।',
     },
   };
@@ -81,6 +84,13 @@ class _AuthScreenState extends State<AuthScreen> {
     if (input.isEmpty || password.isEmpty || (_isSignUp && (name.isEmpty || confirmPassword.isEmpty))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_t('fillAll')), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('passShort')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -110,6 +120,10 @@ class _AuthScreenState extends State<AuthScreen> {
           'phone': input.contains('@') ? '' : input,
           'language': _selectedLanguage,
           'status': 'active',
+          'activeProfileType': 'Personal',
+          'postsCount': 0,
+          'followersCount': 0,
+          'followingCount': 0,
           'createdAt': FieldValue.serverTimestamp(),
         });
       } else {
@@ -284,7 +298,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     onPressed: _isLoading ? null : _submit,
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          )
                         : Text(
                             _isSignUp ? _t('signup') : _t('login'),
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
