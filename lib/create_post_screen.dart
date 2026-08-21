@@ -8,8 +8,13 @@ import 'package:http/http.dart' as http;
 
 class CreatePostScreen extends StatefulWidget {
   final String? initialType;
+  final String? userLanguage;
 
-  const CreatePostScreen({super.key, this.initialType});
+  const CreatePostScreen({
+    super.key,
+    this.initialType,
+    this.userLanguage,
+  });
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -95,6 +100,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         'isVideo': _isVideo,
         'userId': user?.uid ?? 'anonymous',
         'userEmail': user?.email ?? 'User',
+        'language': widget.userLanguage ?? 'gu',
         'createdAt': FieldValue.serverTimestamp(),
         'likes': 0,
       });
