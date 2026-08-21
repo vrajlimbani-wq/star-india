@@ -7,7 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final String? initialType;
+
+  const CreatePostScreen({super.key, this.initialType});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -20,6 +22,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   bool _isLoading = false;
 
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialType == 'video') {
+      _isVideo = true;
+    }
+  }
 
   Future<void> _pickMedia({required bool isVideo}) async {
     final XFile? file = isVideo
